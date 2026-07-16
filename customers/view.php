@@ -26,6 +26,19 @@ $msgs = $messages->fetchAll();
 // Mark customer messages as read
 $conn->prepare("UPDATE messages SET is_read = 1 WHERE customer_id = ? AND sender = 'customer'")->execute([$id]);
 
+// Patient portal account (if any) for this customer
+$portal_stmt = $conn->prepare("SELECT * FROM patient_portal_users WHERE customer_id = ?");
+$portal_stmt->execute([$id]);
+$portal_acct = $portal_stmt->fetch();
+
+// One-time credential reveal: read once, then destroy immediately so a
+// page refresh or later visit never re-shows the plaintext password.
+$revealed_creds = null;
+if (!empty($_SESSION['portal_credentials'])) {
+    $revealed_creds = $_SESSION['portal_credentials'];
+    unset($_SESSION['portal_credentials']);
+}
+
 $parts = explode(' ', $c['customer_name']);
 $initials = strtoupper(substr($parts[0],0,1)) . (isset($parts[1]) ? strtoupper(substr($parts[1],0,1)) : '');
 
@@ -193,6 +206,91 @@ if(isset($_GET['mark_done'])) {
                 </div>
             </div>
             <?php endif; ?>
+
+            <!-- Patient Portal Access -->
+            <div class="card-dp" style="margin-top:24px;">
+                <div class="service-card-header" style="background:var(--navy);">
+                    <div class="service-card-title">
+                        <i class="bi bi-shield-lock"></i> Patient Portal Access
+                    </div>
+                </div>
+
+                <div style="padding:18px 22px;">
+
+                    <?php if ($revealed_creds): ?>
+                    <div class="alert-dp" style="background:rgba(212,168,67,0.1);border:1px solid rgba(212,168,67,0.3);color:#8a6b1f;margin-bottom:16px;">
+                        <i class="bi bi-key-fill"></i>
+                        <strong>New credentials — write these down now, they won't be shown again:</strong><br>
+                        Username: <strong><?php echo htmlspecialchars($revealed_creds['username']); ?></strong><br>
+                        Password: <strong><?php echo htmlspecialchars($revealed_creds['password']); ?></strong>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if (!$portal_acct): ?>
+                        <p style="font-size:0.875rem;color:var(--gray-400);margin-bottom:14px;">
+                            This patient doesn't have portal access yet.
+                        </p>
+                        <form method="POST" action="portal_access.php">
+                            <?php echo csrf_field(); ?>
+                            <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                            <input type="hidden" name="action" value="create">
+                            <button type="submit" class="btn-primary-dp" style="font-size:0.82rem;padding:8px 16px;">
+                                <i class="bi bi-person-plus-fill"></i> Create Portal Access
+                            </button>
+                        </form>
+
+                    <?php else: ?>
+                        <div class="billing-row">
+                            <span class="billing-label">Username</span>
+                            <span class="billing-amount" style="font-size:1rem;"><?php echo htmlspecialchars($portal_acct['username']); ?></span>
+                        </div>
+                        <div class="billing-row">
+                            <span class="billing-label">Status</span>
+                            <span class="status-pill status-<?php echo $portal_acct['is_active'] ? 'paid' : 'pending'; ?>">
+                                <?php echo $portal_acct['is_active'] ? 'Active' : 'Disabled'; ?>
+                            </span>
+                        </div>
+                        <?php if ($portal_acct['last_login']): ?>
+                        <div class="billing-row">
+                            <span class="billing-label">Last Login</span>
+                            <span class="billing-amount" style="font-size:0.85rem;"><?php echo date('M j, Y h:i A', strtotime($portal_acct['last_login'])); ?></span>
+                        </div>
+                        <?php endif; ?>
+
+                        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+                            <form method="POST" action="portal_access.php" onsubmit="return confirm('Reset password? The current password will stop working immediately.');">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                                <input type="hidden" name="action" value="reset">
+                                <button type="submit" class="btn-outline-dp" style="font-size:0.82rem;padding:8px 16px;">
+                                    <i class="bi bi-arrow-repeat"></i> Reset Password
+                                </button>
+                            </form>
+
+                            <?php if ($portal_acct['is_active']): ?>
+                            <form method="POST" action="portal_access.php" onsubmit="return confirm('Disable portal access for this patient?');">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                                <input type="hidden" name="action" value="deactivate">
+                                <button type="submit" class="btn-danger-dp" style="font-size:0.82rem;padding:8px 16px;">
+                                    <i class="bi bi-slash-circle"></i> Disable Access
+                                </button>
+                            </form>
+                            <?php else: ?>
+                            <form method="POST" action="portal_access.php">
+                                <?php echo csrf_field(); ?>
+                                <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                                <input type="hidden" name="action" value="reactivate">
+                                <button type="submit" class="btn-success-dp" style="font-size:0.82rem;padding:8px 16px;">
+                                    <i class="bi bi-check-circle"></i> Re-enable Access
+                                </button>
+                            </form>
+                            <?php endif; ?>
+                        </div>
+                    <?php endif; ?>
+
+                </div>
+            </div>
 
             <!-- Appointments -->
             <div style="margin-top:24px;">

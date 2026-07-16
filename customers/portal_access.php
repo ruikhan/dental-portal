@@ -3,7 +3,7 @@ require_once '../auth/session.php';
 require_admin_login();
 include "../db_conn.php";
 
-if (!isset($_POST['customer_id']) || !isset($_POST['action'])) {
+if (!isset($_POST['customer_id']) || !isset($_POST['action']) || !verify_csrf()) {
     header("Location: list.php");
     exit();
 }
