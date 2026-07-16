@@ -43,6 +43,11 @@ $msgs = $messages->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include '../partials/pwa-head.php'; ?>
+    <span>   
+    <a href="dashboard.php" class="<?php echo $current_page==='dashboard.php' ? 'active' : ''; ?>">
+        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
+    </a>
+    </span>
     <title>Messages — DentalPortal</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
