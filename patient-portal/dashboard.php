@@ -307,7 +307,7 @@ function dp_status_color($status) {
     </div>
 
     <!-- Quick Stats -->
-    <div class="dp-quickstats">
+    <!-- <div class="dp-quickstats">
         <div class="dp-stat-card">
             <div class="dp-stat-icon teal"><i class="bi bi-calendar-event"></i></div>
             <div class="dp-stat-label">Next Visit</div>
@@ -334,7 +334,7 @@ function dp_status_color($status) {
             <div class="dp-stat-label">Payment Status</div>
             <div class="dp-stat-value" style="font-size:1.05rem;"><?php echo ucfirst($ps); ?></div>
         </div>
-    </div>
+    </div> -->
 
     <!-- Next Appointment -->
     <?php if ($next_appt):
