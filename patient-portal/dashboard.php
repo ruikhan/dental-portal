@@ -282,7 +282,7 @@ function dp_status_color($status) {
     </style>
 </head>
 <body>
-<?php include 'partials/topbar.php'; ?>
+<!-- // <?php include 'partials/topbar.php'; ?> -->
 
 <div class="page-content" style="max-width:1000px;margin:0 auto;">
 
