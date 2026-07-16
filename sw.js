@@ -2,10 +2,21 @@
 // DentalPortal Service Worker — Offline & PWA Support
 // ============================================================
 
-const CACHE_NAME = 'dental-portal-v1';
+// Bumped v1 -> v2: the icon set and odontogram assets are new, and this
+// forces any previously-registered worker (from before registration was
+// actually wired into app.js) to fully replace its cache rather than
+// serving stale/missing entries.
+const CACHE_NAME = 'dental-portal-v2';
 const STATIC_ASSETS = [
     '/assets/style.css',
     '/assets/app.js',
+    '/assets/odontogram.css',
+    '/assets/odontogram.js',
+    '/assets/icons/icon-192.png',
+    '/assets/icons/icon-512.png',
+    '/assets/icons/apple-touch-icon.png',
+    '/assets/icons/favicon-32.png',
+    '/favicon.ico',
     '/offline.php',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css'
@@ -33,7 +44,7 @@ self.addEventListener('activate', event => {
 });
 
 // Fetch strategy:
-// - Static assets (CSS, JS, fonts): Cache First
+// - Static assets (CSS, JS, fonts, icons): Cache First
 // - PHP pages: Network First, fallback to offline page
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
@@ -44,6 +55,7 @@ self.addEventListener('fetch', event => {
     // Cache-first for static assets
     if (
         url.pathname.startsWith('/assets/') ||
+        url.pathname === '/favicon.ico' ||
         url.hostname.includes('googleapis.com') ||
         url.hostname.includes('jsdelivr.net') ||
         url.hostname.includes('gstatic.com')

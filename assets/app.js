@@ -115,3 +115,19 @@ document.querySelector('.pwa-install-btn')?.addEventListener('click', async () =
 document.querySelector('.pwa-dismiss')?.addEventListener('click', () => {
     if (pwaBanner) pwaBanner.classList.remove('show');
 });
+
+// ============================================================
+// Service Worker Registration
+// ============================================================
+// sw.js and manifest.json alone don't do anything — the browser only
+// treats this as a real installable app (custom icon, standalone window,
+// offline support) once a service worker is actually registered. This
+// was previously a separate, never-included file (sw-registration-snippet.js);
+// it's merged in here so it actually runs on every page that loads app.js.
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('Service worker registered, scope:', reg.scope))
+            .catch(err => console.warn('Service worker registration failed:', err));
+    });
+}

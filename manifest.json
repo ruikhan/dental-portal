@@ -2,31 +2,37 @@
   "name": "DentalPortal Management System",
   "short_name": "DentalPortal",
   "description": "Dental Service Management Portal — manage patients, services, appointments and billing.",
+  "id": "/",
   "start_url": "/index.php",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#0f2d4a",
   "theme_color": "#0f2d4a",
   "orientation": "any",
   "icons": [
     {
-      "src": "assets/icons/icon-192.png",
+      "src": "/assets/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "assets/icons/icon-512.png",
+      "src": "/assets/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ],
-  "screenshots": [
+      "purpose": "any"
+    },
     {
-      "src": "assets/screenshots/dashboard.png",
-      "sizes": "1280x720",
+      "src": "/assets/icons/icon-192-maskable.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "form_factor": "wide"
+      "purpose": "maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "categories": ["medical", "business", "productivity"],
