@@ -235,10 +235,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     <div class="login-footer">
         <p>Clinic staff? <a href="../auth/login.php">Go to Admin Login →</a></p>
-            <a href="dashboard.php" class="<?php echo $current_page==='dashboard.php' ? 'active' : ''; ?>">
-        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
-    </a>
     </div>
+            <button type="submit" class="btn-login">
+            <i class="bi bi-box-arrow-in-right"></i> Sign In
+        </button>
 </div>
 
 <script>
