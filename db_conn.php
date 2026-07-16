@@ -10,7 +10,7 @@ $sName   = getenv('DB_HOST') ?: '127.0.0.1';
 $dPort   = getenv('DB_PORT') ?: '3307';        // XAMPP default in this project was 3307
 $uName   = getenv('DB_USER') ?: 'root';
 $pass    = getenv('DB_PASS') ?: '';
-$db_name = getenv('DB_NAME') ?: 'dental_portal_db';
+$db_name = getenv('DB_NAME') ?: 'defaultdb';
 
 // Some managed MySQL hosts (e.g. Aiven) require SSL and provide a CA cert.
 // Set DB_SSL_CA to the absolute path of that cert file if your host needs it.

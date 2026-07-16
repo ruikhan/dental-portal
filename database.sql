@@ -2,8 +2,8 @@
 -- DENTAL SERVICE MANAGEMENT PORTAL - DATABASE SCHEMA
 -- ============================================================
 
-CREATE DATABASE IF NOT EXISTS dental_portal_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE dental_portal_db;
+CREATE DATABASE IF NOT EXISTS defaultdb CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE defaultdb;
 
 -- ============================================================
 -- TABLE: customers
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS messages (
 -- Run this AFTER your existing database.sql is already imported
 -- ============================================================
 
-USE dental_portal_db;
+USE defaultdb;
 
 -- ============================================================
 -- TABLE: admin_users — Authentication
