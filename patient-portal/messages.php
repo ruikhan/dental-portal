@@ -50,7 +50,7 @@ $msgs = $messages->fetchAll();
     <link href="../assets/patient-portal.css" rel="stylesheet">
 </head>
 <body>
-<?php include 'partials/topbar.php'; ?>
+<!-- // <?php include 'partials/topbar.php'; ?> -->
 
 <div class="page-content" style="max-width:760px;margin:0 auto;">
 
