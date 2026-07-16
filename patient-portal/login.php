@@ -237,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <p>Clinic staff? <a href="../auth/login.php">Go to Admin Login →</a></p>
     </div>
             <button type="submit" class="btn-login">
-            <i class="bi bi-box-arrow-in-right"></i> Sign In
+            <i class="bi bi-anthropic"></i> Powered by AI Insight
         </button>
 </div>
 
