@@ -44,9 +44,6 @@ $msgs = $messages->fetchAll();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <?php include '../partials/pwa-head.php'; ?>
     <span>   
-    <a href="dashboard.php" class="<?php echo $current_page==='dashboard.php' ? 'active' : ''; ?>">
-        <i class="bi bi-speedometer2"></i><span>Dashboard</span>
-    </a>
     </span>
     <title>Messages — DentalPortal</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
@@ -65,7 +62,11 @@ $msgs = $messages->fetchAll();
             <p class="page-subtitle">Your conversation with your clinic</p>
         </div>
     </div>
-
+        <div class="customer-hero-actions">
+            <a href="dashboard.php" class="btn-primary-dp">
+                <i class="bi bi-chat-dots-fill"></i> Message Clinic
+            </a>
+        </div>
     <div class="card-dp" style="display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:420px;">
         <div class="chat-messages" id="chatMessages">
             <?php if (count($msgs) > 0): ?>
