@@ -1,4 +1,6 @@
 <?php
+require_once '../auth/session.php';
+require_admin_login();
 include "../db_conn.php";
 
 $customers = $conn->query("

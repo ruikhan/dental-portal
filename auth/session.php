@@ -25,8 +25,14 @@ function require_patient_login(string $redirect_to = '') {
 }
 
 // ── Utility: build root-relative path ─────────────────────────
+// FIX: correct depth formula is (slash count - 1), not -2 — see
+// partials/sidebar.php and partials/topbar.php for the same fix
+// and full explanation. This only affects pages one or more
+// folders deep (e.g. customers/view.php) that call
+// require_admin_login()/require_patient_login(); root-level pages
+// were already safe thanks to the max(0, ...) clamp.
 function root_path(string $path = ''): string {
-    $depth = substr_count($_SERVER['PHP_SELF'], '/') - 2;
+    $depth = substr_count($_SERVER['PHP_SELF'], '/') - 1;
     return str_repeat('../', max(0, $depth)) . $path;
 }
 

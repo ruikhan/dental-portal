@@ -1,4 +1,6 @@
 <?php
+require_once '../auth/session.php';
+require_admin_login();
 include "../db_conn.php";
 if(isset($_GET['id'])) {
     $id = (int)$_GET['id'];

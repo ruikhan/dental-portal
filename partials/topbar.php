@@ -1,7 +1,11 @@
 <?php
-// FIX: clamp to 0 so root-level pages (e.g. /index.php, /settings.php)
-// don't produce a negative count and crash str_repeat() on PHP 8+.
-$__depth = substr_count($_SERVER['PHP_SELF'], '/') - 2;
+// FIX: correct depth formula is (slash count - 1), not -2 — the old
+// formula under-counted by one folder for every non-root page (e.g.
+// customers/view.php, appointments/list.php), producing broken links
+// like /customers/appointments/list.php instead of /appointments/list.php.
+// max(0, ...) still guards root-level pages (index.php, settings.php)
+// against a negative count, which crashes str_repeat() on PHP 8+.
+$__depth = substr_count($_SERVER['PHP_SELF'], '/') - 1;
 $__rel   = str_repeat('../', max(0, $__depth));
 ?>
 <header class="topbar">

@@ -1,4 +1,6 @@
 <?php
+require_once '../auth/session.php';
+require_admin_login();
 include "../db_conn.php";
 
 // Fetch ALL appointments — calendar + list are both rendered client-side from this dataset
