@@ -1,10 +1,14 @@
 // ============================================================
-// ODONTOGRAM v2 — Interactive Tooth Chart with Per-Tooth Detail
-// Save as: assets/odontogram.js  (replaces the v1 file)
+// ODONTOGRAM v3 — Interactive Tooth Chart with Per-Tooth Detail
+// Save as: assets/odontogram.js  (replaces the v2 file)
 // ============================================================
 // FDI notation: first digit = quadrant (1=upper right, 2=upper left,
 // 3=lower left, 4=lower right), second digit = tooth position
 // (1=central incisor ... 8=third molar/wisdom tooth).
+//
+// Exported functions (these exact names are what the pages call):
+//   initOdontogramAdvanced(chartContainer, detailsContainer, initialData, hiddenInput, onChange)
+//   renderReadOnlyOdontogramAdvanced(chartContainer, detailsContainer, data)
 
 const FDI_UPPER = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
 const FDI_LOWER = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
@@ -17,9 +21,9 @@ const TOOTH_NAMES = {
 function toothName(fdi) { return TOOTH_NAMES[fdi % 10] || 'Tooth'; }
 
 const STATUS_META = {
-    planned:     { label: 'Planned',     cls: 'status-planned' },
-    in_progress: { label: 'In Progress', cls: 'status-inprogress' },
-    completed:   { label: 'Completed',   cls: 'status-completed' },
+    planned:     { label: 'Planned',     cls: 'status-planned',     dotCls: 'planned' },
+    in_progress: { label: 'In Progress', cls: 'status-inprogress',  dotCls: 'inprogress' },
+    completed:   { label: 'Completed',   cls: 'status-completed',   dotCls: 'completed' },
 };
 
 function buildToothButton(fdi) {
@@ -46,7 +50,20 @@ function buildRow(fdiList, rowClass) {
     return row;
 }
 
-function buildChartSkeleton(container) {
+// Legend explaining tooth colors. `interactive` adds a "tap to toggle" hint.
+function buildLegend(interactive) {
+    const legend = document.createElement('div');
+    legend.className = 'odonto-legend';
+    legend.innerHTML = `
+        <span class="odonto-legend-item"><span class="odonto-legend-dot planned"></span>Planned</span>
+        <span class="odonto-legend-item"><span class="odonto-legend-dot inprogress"></span>In Progress</span>
+        <span class="odonto-legend-item"><span class="odonto-legend-dot completed"></span>Completed</span>
+        ${interactive ? '<span class="odonto-legend-hint"><i class="bi bi-hand-index-thumb"></i> Tap a tooth to add or remove it</span>' : ''}
+    `;
+    return legend;
+}
+
+function buildChartSkeleton(container, interactive) {
     container.innerHTML = '';
     container.classList.add('odontogram-wrap');
 
@@ -62,11 +79,12 @@ function buildChartSkeleton(container) {
     labelsBottom.className = 'odonto-quad-labels';
     labelsBottom.innerHTML = `<span>Lower Right</span><span>Lower Left</span>`;
     container.appendChild(labelsBottom);
+
+    container.appendChild(buildLegend(interactive));
 }
 
-// Accepts either the new JSON-array format or the legacy plain-CSV
-// format from before per-tooth detail existed, and normalizes both
-// into a Map<fdi, {status, shade, size, notes}>.
+// Accepts either the JSON-array format or the legacy plain-CSV format,
+// and normalizes both into a Map<fdi, {status, shade, size, notes}>.
 function parseInitial(initial) {
     const map = new Map();
     if (!initial) return map;
@@ -83,8 +101,8 @@ function parseInitial(initial) {
                 notes: t.notes || ''
             });
         });
-    } else {
-        String(initial).split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
+    } else if (typeof initial === 'string') {
+        initial.split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
             const fdi = Number(s);
             if (fdi) map.set(fdi, { status: 'planned', shade: '', size: '', notes: '' });
         });
@@ -98,6 +116,22 @@ function teethMapToArray(teeth) {
         .map(([fdi, d]) => ({ fdi, ...d }));
 }
 
+function countsFromTeeth(teeth) {
+    const upper = Array.from(teeth.keys()).filter(f => f >= 11 && f <= 28).length;
+    const lower = Array.from(teeth.keys()).filter(f => f >= 31 && f <= 48).length;
+    return { upper, lower };
+}
+
+function buildCountBadges(upper, lower, total) {
+    return `
+        <div class="odonto-count-badges">
+            <span class="odonto-badge"><i class="bi bi-arrow-up-circle"></i> Upper <span class="num">${upper}</span></span>
+            <span class="odonto-badge"><i class="bi bi-arrow-down-circle"></i> Lower <span class="num">${lower}</span></span>
+            <span class="odonto-badge"><i class="bi bi-grid-3x3-gap-fill"></i> Total <span class="num">${total}</span></span>
+        </div>
+    `;
+}
+
 /**
  * Full interactive odontogram: click a tooth to add/remove it, then set
  * its status/shade/size/notes in the detail list that appears below.
@@ -108,13 +142,12 @@ function teethMapToArray(teeth) {
  * @param {Function} [onChange]          (teethArray, upperCount, lowerCount) => void
  */
 function initOdontogramAdvanced(chartContainer, detailsContainer, initialData, hiddenInput, onChange) {
-    buildChartSkeleton(chartContainer);
+    buildChartSkeleton(chartContainer, true);
     const teeth = parseInitial(initialData);
 
     function pushChange(arr) {
         if (hiddenInput) hiddenInput.value = JSON.stringify(arr);
-        const upper = arr.filter(t => t.fdi >= 11 && t.fdi <= 28).length;
-        const lower = arr.filter(t => t.fdi >= 31 && t.fdi <= 48).length;
+        const { upper, lower } = countsFromTeeth(teeth);
         if (typeof onChange === 'function') onChange(arr, upper, lower);
     }
 
@@ -129,10 +162,33 @@ function initOdontogramAdvanced(chartContainer, detailsContainer, initialData, h
 
     function renderDetails() {
         detailsContainer.innerHTML = '';
+
+        const { upper, lower } = countsFromTeeth(teeth);
+        const toolbar = document.createElement('div');
+        toolbar.className = 'odonto-toolbar';
+        toolbar.innerHTML = buildCountBadges(upper, lower, teeth.size) +
+            (teeth.size > 0 ? '<button type="button" class="odonto-clear-btn"><i class="bi bi-x-circle"></i> Clear All</button>' : '');
+        detailsContainer.appendChild(toolbar);
+
+        const clearBtn = toolbar.querySelector('.odonto-clear-btn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (!confirm('Remove all selected teeth from the chart?')) return;
+                teeth.clear();
+                renderChartColors();
+                renderDetails();
+                pushChange(teethMapToArray(teeth));
+            });
+        }
+
         if (teeth.size === 0) {
-            detailsContainer.innerHTML = `<div class="odonto-empty-hint"><i class="bi bi-hand-index-thumb"></i> Tap teeth on the chart above to add detail</div>`;
+            const hint = document.createElement('div');
+            hint.className = 'odonto-empty-hint';
+            hint.innerHTML = `<i class="bi bi-hand-index-thumb"></i><span>Tap teeth on the chart above to add detail</span>`;
+            detailsContainer.appendChild(hint);
             return;
         }
+
         Array.from(teeth.keys()).sort((a, b) => a - b).forEach(fdi => {
             const d = teeth.get(fdi);
             const row = document.createElement('div');
@@ -202,7 +258,7 @@ function initOdontogramAdvanced(chartContainer, detailsContainer, initialData, h
  * @param {string|Array} data JSON string or already-parsed array of tooth records
  */
 function renderReadOnlyOdontogramAdvanced(chartContainer, detailsContainer, data) {
-    buildChartSkeleton(chartContainer);
+    buildChartSkeleton(chartContainer, false);
     chartContainer.classList.add('odontogram-readonly');
 
     const teeth = parseInitial(typeof data === 'string' ? data : JSON.stringify(data || []));
@@ -216,7 +272,16 @@ function renderReadOnlyOdontogramAdvanced(chartContainer, detailsContainer, data
 
     if (!detailsContainer) return;
     detailsContainer.innerHTML = '';
-    if (teeth.size === 0) return;
+    if (teeth.size === 0) {
+        detailsContainer.innerHTML = `<div class="odonto-empty-hint"><i class="bi bi-info-circle"></i><span>No tooth chart recorded for this service yet.</span></div>`;
+        return;
+    }
+
+    const { upper, lower } = countsFromTeeth(teeth);
+    const badgeRow = document.createElement('div');
+    badgeRow.className = 'odonto-toolbar';
+    badgeRow.innerHTML = buildCountBadges(upper, lower, teeth.size);
+    detailsContainer.appendChild(badgeRow);
 
     const table = document.createElement('table');
     table.className = 'dp-table tooth-detail-table';

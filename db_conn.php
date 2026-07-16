@@ -35,16 +35,40 @@ try {
 }
 
 // ── Odontogram helper ───────────────────────────────────────
-// Converts a comma-separated list of FDI tooth codes (e.g. "18,17,21,41",
-// as produced by the odontogram widget) into [upper_count, lower_count].
-// FDI quadrants 1-2 (codes 11-28) = upper arch, quadrants 3-4 (31-48) = lower arch.
+// The odontogram widget (assets/odontogram.js) writes teeth_data as a JSON
+// array of per-tooth records, e.g.:
+//   [{"fdi":18,"status":"planned","shade":"A3","size":"64","notes":""}, ...]
+// FDI quadrants 1-2 (codes 11-28) = upper arch, quadrants 3-4 (31-48) = lower
+// arch. This derives [upper_count, lower_count] from that array so every
+// dashboard, list, and analytics query that reads tooth_upper/tooth_lower
+// keeps working unchanged.
+//
+// A legacy plain comma-separated format ("18,17,21,41") is also accepted as
+// a fallback, in case any older records were saved before the JSON format
+// existed.
 if (!function_exists('odonto_counts')) {
-    function odonto_counts(string $teethCsv): array {
-        $upper = 0; $lower = 0;
-        foreach (array_filter(explode(',', $teethCsv)) as $t) {
-            $t = (int)trim($t);
-            if ($t >= 11 && $t <= 28) $upper++;
-            elseif ($t >= 31 && $t <= 48) $lower++;
+    function odonto_counts(string $teethData): array {
+        $teethData = trim($teethData);
+        if ($teethData === '') return [0, 0];
+
+        $upper = 0;
+        $lower = 0;
+
+        $decoded = json_decode($teethData, true);
+        if (is_array($decoded)) {
+            foreach ($decoded as $tooth) {
+                $fdi = isset($tooth['fdi']) ? (int)$tooth['fdi'] : 0;
+                if ($fdi >= 11 && $fdi <= 28) $upper++;
+                elseif ($fdi >= 31 && $fdi <= 48) $lower++;
+            }
+            return [$upper, $lower];
+        }
+
+        // Legacy CSV fallback
+        foreach (array_filter(explode(',', $teethData)) as $t) {
+            $fdi = (int)trim($t);
+            if ($fdi >= 11 && $fdi <= 28) $upper++;
+            elseif ($fdi >= 31 && $fdi <= 48) $lower++;
         }
         return [$upper, $lower];
     }

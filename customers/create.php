@@ -11,8 +11,8 @@ if (isset($_POST['submit'])) {
     $notes   = trim($_POST['notes'] ?? '');
 
     // Service fields
-    $tooth_upper = (int)($_POST['tooth_upper'] ?? 0);
-    $tooth_lower = (int)($_POST['tooth_lower'] ?? 0);
+    $teeth_data = trim($_POST['teeth_data'] ?? '');
+    [$tooth_upper, $tooth_lower] = odonto_counts($teeth_data);
     $tooth_shade = trim($_POST['tooth_shade'] ?? '');
     $tooth_size  = trim($_POST['tooth_size'] ?? '');
     $desc        = trim($_POST['service_description'] ?? '');
@@ -33,8 +33,8 @@ if (isset($_POST['submit'])) {
             $stmt->execute([$name, $phone, $email, $address, $notes]);
             $customer_id = $conn->lastInsertId();
 
-            $stmt2 = $conn->prepare("INSERT INTO dental_services (customer_id, tooth_upper, tooth_lower, tooth_shade, tooth_size, description, total_bill, amount_paid, payment_status) VALUES (?,?,?,?,?,?,?,?,?)");
-            $stmt2->execute([$customer_id, $tooth_upper, $tooth_lower, $tooth_shade, $tooth_size, $desc, $total_bill, $amount_paid, $ps]);
+            $stmt2 = $conn->prepare("INSERT INTO dental_services (customer_id, tooth_upper, tooth_lower, teeth_data, tooth_shade, tooth_size, description, total_bill, amount_paid, payment_status) VALUES (?,?,?,?,?,?,?,?,?,?)");
+            $stmt2->execute([$customer_id, $tooth_upper, $tooth_lower, $teeth_data, $tooth_shade, $tooth_size, $desc, $total_bill, $amount_paid, $ps]);
 
             $conn->commit();
             header("Location: view.php?id=$customer_id&msg=" . urlencode("Patient added successfully!"));
@@ -56,6 +56,7 @@ if (isset($_POST['submit'])) {
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../assets/style.css" rel="stylesheet">
+    <link href="../assets/odontogram.css" rel="stylesheet">
 </head>
 <body>
 <?php include '../partials/sidebar.php'; ?>
@@ -121,24 +122,22 @@ if (isset($_POST['submit'])) {
                 <i class="bi bi-tooth"></i> Dental Service Details
             </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label class="form-label-dp">Number of Upper Teeth</label>
-                    <input type="number" name="tooth_upper" class="form-control-dp" min="0" max="32" placeholder="0" value="<?php echo htmlspecialchars($_POST['tooth_upper'] ?? 0); ?>">
-                </div>
-                <div class="form-group">
-                    <label class="form-label-dp">Number of Lower Teeth</label>
-                    <input type="number" name="tooth_lower" class="form-control-dp" min="0" max="32" placeholder="0" value="<?php echo htmlspecialchars($_POST['tooth_lower'] ?? 0); ?>">
-                </div>
+            <div class="form-group">
+                <label class="form-label-dp">Select Teeth Involved</label>
+                <div id="odontogramContainer"></div>
+                <input type="hidden" name="teeth_data" id="teethDataInput" value="<?php echo htmlspecialchars($_POST['teeth_data'] ?? ''); ?>">
+                <!-- Populated by odontogram.js: live upper/lower/total counts, clear-all,
+                     and a per-tooth status/shade/size/notes editor. -->
+                <div id="odontogramDetails" style="margin-top:14px;"></div>
             </div>
 
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label-dp">Tooth Shade</label>
+                    <label class="form-label-dp">Overall Shade <span style="color:var(--gray-400);font-weight:400;">(optional quick-reference — set per-tooth shade above for detail)</span></label>
                     <input type="text" name="tooth_shade" class="form-control-dp" placeholder="e.g. A3, B2" value="<?php echo htmlspecialchars($_POST['tooth_shade'] ?? ''); ?>">
                 </div>
                 <div class="form-group">
-                    <label class="form-label-dp">Tooth Size / Code</label>
+                    <label class="form-label-dp">Overall Size / Code</label>
                     <input type="text" name="tooth_size" class="form-control-dp" placeholder="e.g. 64, 52" value="<?php echo htmlspecialchars($_POST['tooth_size'] ?? ''); ?>">
                 </div>
             </div>
@@ -195,7 +194,15 @@ if (isset($_POST['submit'])) {
 </div>
 
 <script src="../assets/app.js"></script>
+<script src="../assets/odontogram.js"></script>
 <script>
+initOdontogramAdvanced(
+    document.getElementById('odontogramContainer'),
+    document.getElementById('odontogramDetails'),
+    document.getElementById('teethDataInput').value,
+    document.getElementById('teethDataInput')
+);
+
 const totalBill  = document.getElementById('totalBill');
 const amountPaid = document.getElementById('amountPaid');
 const balanceDisplay = document.getElementById('balanceDisplay');

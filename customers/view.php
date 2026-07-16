@@ -60,6 +60,7 @@ if(isset($_GET['mark_done'])) {
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../assets/style.css" rel="stylesheet">
+    <link href="../assets/odontogram.css" rel="stylesheet">
 </head>
 <body>
 <?php include '../partials/sidebar.php'; ?>
@@ -128,10 +129,18 @@ if(isset($_GET['mark_done'])) {
                     </div>
                 </div>
 
+                <?php if(!empty($s['teeth_data'])): ?>
+                <div class="service-spec-row" style="flex-direction:column;align-items:stretch;gap:10px;">
+                    <span class="spec-label"><i class="bi bi-grid-3x3-gap-fill"></i> Tooth Chart</span>
+                    <div id="viewOdontogram"></div>
+                    <div id="viewOdontogramDetails"></div>
+                </div>
+                <?php endif; ?>
+
                 <!-- Specifications -->
                 <?php if($s['tooth_shade'] || $s['tooth_size']): ?>
                 <div class="service-spec-row">
-                    <span class="spec-label"><i class="bi bi-palette"></i> Specification</span>
+                    <span class="spec-label"><i class="bi bi-palette"></i> Overall Spec</span>
                     <?php if($s['tooth_shade']): ?>
                     <span class="spec-tag">Shade: <?php echo htmlspecialchars($s['tooth_shade']); ?></span>
                     <?php endif; ?>
@@ -309,10 +318,21 @@ if(isset($_GET['mark_done'])) {
 </style>
 
 <script src="../assets/app.js"></script>
+<script src="../assets/odontogram.js"></script>
 <script>
 // Scroll chat to bottom
 const chatMessages = document.getElementById('chatMessages');
 if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
+
+<?php if(!empty($s['teeth_data'])): ?>
+// json_encode (not addslashes+single-quotes) so any special characters in
+// notes/shade fields can't break out of the string literal.
+renderReadOnlyOdontogramAdvanced(
+    document.getElementById('viewOdontogram'),
+    document.getElementById('viewOdontogramDetails'),
+    <?php echo json_encode($s['teeth_data']); ?>
+);
+<?php endif; ?>
 </script>
 </body>
 </html>
