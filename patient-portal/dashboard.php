@@ -126,8 +126,21 @@ function dp_status_color($status) {
         .customer-hero-avatar {
             box-shadow: 0 6px 16px -4px rgba(15, 45, 74, 0.28), inset 0 1px 0 rgba(255,255,255,0.25);
         }
+        /* The glass hero is light, so text needs an explicit dark color —
+           it can't inherit whatever white/light value the base stylesheet
+           set for what was presumably a dark card background before. */
         .customer-hero-name {
             letter-spacing: -0.01em;
+            color: var(--navy, #0f2d4a) !important;
+        }
+        .customer-hero-meta {
+            color: var(--gray-600, #5a6472) !important;
+        }
+        .customer-hero-meta span {
+            color: inherit !important;
+        }
+        .customer-hero-meta i {
+            color: var(--teal, #14b8a6);
         }
         .btn-primary-dp {
             border-radius: 980px !important; /* Apple's signature pill button */
@@ -282,7 +295,7 @@ function dp_status_color($status) {
     </style>
 </head>
 <body>
-<!-- // <?php include 'partials/topbar.php'; ?> -->
+<?php include 'partials/topbar.php'; ?>
 
 <div class="page-content" style="max-width:1000px;margin:0 auto;">
 
@@ -301,13 +314,10 @@ function dp_status_color($status) {
                 <i class="bi bi-chat-dots-fill"></i> Message Clinic
             </a>
         </div>
-                    <a href="logout.php" class="topbar-icon-btn" title="Log out">
-                <i class="bi bi-box-arrow-right"></i>
-            </a>
     </div>
 
     <!-- Quick Stats -->
-    <!-- <div class="dp-quickstats">
+    <div class="dp-quickstats">
         <div class="dp-stat-card">
             <div class="dp-stat-icon teal"><i class="bi bi-calendar-event"></i></div>
             <div class="dp-stat-label">Next Visit</div>
@@ -334,7 +344,7 @@ function dp_status_color($status) {
             <div class="dp-stat-label">Payment Status</div>
             <div class="dp-stat-value" style="font-size:1.05rem;"><?php echo ucfirst($ps); ?></div>
         </div>
-    </div> -->
+    </div>
 
     <!-- Next Appointment -->
     <?php if ($next_appt):
