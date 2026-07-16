@@ -306,6 +306,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!-- Form Panel -->
 <div class="login-form-panel">
     <div class="form-header">
+        <p>Dev: Justine Villarosa</p>
         <h2>Welcome back</h2>
         <p>Sign in to your admin account to continue</p>
     </div>
