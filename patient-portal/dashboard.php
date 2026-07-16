@@ -314,36 +314,9 @@ function dp_status_color($status) {
                 <i class="bi bi-chat-dots-fill"></i> Message Clinic
             </a>
         </div>
-    </div>
-
-    <!-- Quick Stats -->
-    <div class="dp-quickstats">
-        <div class="dp-stat-card">
-            <div class="dp-stat-icon teal"><i class="bi bi-calendar-event"></i></div>
-            <div class="dp-stat-label">Next Visit</div>
-            <div class="dp-stat-value">
-                <?php echo $next_appt ? (new DateTime($next_appt['appointment_date']))->format('M j') : '—'; ?>
-            </div>
-        </div>
-        <div class="dp-stat-card">
-            <div class="dp-stat-icon <?php echo $bal > 0 ? 'warning' : 'success'; ?>">
-                <i class="bi bi-cash-coin"></i>
-            </div>
-            <div class="dp-stat-label">Balance Due</div>
-            <div class="dp-stat-value"><?php echo $bal > 0 ? '₱' . number_format($bal, 2) : '₱0.00'; ?></div>
-        </div>
-        <div class="dp-stat-card">
-            <div class="dp-stat-icon navy"><i class="bi bi-clipboard2-check"></i></div>
-            <div class="dp-stat-label">Total Visits</div>
-            <div class="dp-stat-value"><?php echo $total_appts; ?></div>
-        </div>
-        <div class="dp-stat-card">
-            <div class="dp-stat-icon <?php echo $ps === 'paid' ? 'success' : ($ps === 'partial' ? 'warning' : 'gray'); ?>">
-                <i class="bi bi-receipt-cutoff"></i>
-            </div>
-            <div class="dp-stat-label">Payment Status</div>
-            <div class="dp-stat-value" style="font-size:1.05rem;"><?php echo ucfirst($ps); ?></div>
-        </div>
+            <a href="logout.php" class="topbar-icon-btn" title="Log out">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
     </div>
 
     <!-- Next Appointment -->
