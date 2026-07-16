@@ -1,0 +1,212 @@
+/* ============================================================
+   ODONTOGRAM — Interactive Tooth Chart
+   Save as: assets/odontogram.css
+   Uses the same CSS variables already defined in assets/style.css
+   ============================================================ */
+
+.odontogram-wrap {
+    background: var(--gray-50);
+    border: 1px solid var(--gray-100);
+    border-radius: var(--radius);
+    padding: 18px 14px;
+    overflow-x: auto;
+}
+
+.odonto-quad-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px 6px;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    color: var(--gray-400);
+    min-width: max-content;
+}
+
+.odonto-row {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 4px;
+    padding: 6px 0 10px;
+    min-width: max-content;
+}
+.odonto-row.odonto-lower { align-items: flex-start; padding: 10px 0 6px; }
+
+.odonto-midline {
+    align-self: stretch;
+    width: 0;
+    border-left: 2px dashed var(--gray-200);
+    margin: 0 5px;
+}
+
+.tooth-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 2px;
+    font-family: 'Outfit', sans-serif;
+    width: clamp(24px, 5vw, 34px);
+    transition: var(--transition);
+}
+
+.tooth-shape {
+    width: 100%;
+    aspect-ratio: 1 / 1.15;
+    background: white;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px 8px 10px 10px;
+    position: relative;
+    transition: var(--transition);
+}
+/* small "root" nub so it reads as a tooth rather than a plain square */
+.tooth-shape::after {
+    content: '';
+    position: absolute;
+    left: 50%; bottom: -5px;
+    transform: translateX(-50%);
+    width: 42%; height: 8px;
+    background: inherit;
+    border-color: inherit;
+    clip-path: polygon(20% 0, 80% 0, 60% 100%, 40% 100%);
+}
+.odonto-row.odonto-lower .tooth-shape::after {
+    bottom: auto; top: -5px;
+    transform: translateX(-50%) rotate(180deg);
+}
+
+.tooth-num {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: var(--gray-400);
+}
+
+.tooth-btn:hover .tooth-shape {
+    border-color: var(--teal-soft);
+    transform: translateY(-2px);
+}
+.odonto-row.odonto-lower .tooth-btn:hover .tooth-shape { transform: translateY(2px); }
+
+.tooth-btn.selected .tooth-shape {
+    background: linear-gradient(135deg, var(--teal), var(--navy-soft));
+    border-color: var(--navy-soft);
+    box-shadow: 0 3px 10px rgba(10,143,143,0.35);
+}
+.tooth-btn.selected .tooth-num { color: var(--navy); font-weight: 800; }
+
+/* Status-colored teeth — reflects the per-tooth status set in the detail editor */
+.tooth-btn.selected.status-planned .tooth-shape {
+    background: linear-gradient(135deg, var(--warning), #f0a83a);
+    border-color: #c77a12;
+    box-shadow: 0 3px 10px rgba(224,139,26,0.35);
+}
+.tooth-btn.selected.status-inprogress .tooth-shape {
+    background: linear-gradient(135deg, var(--info), #4a9de0);
+    border-color: #1f66a8;
+    box-shadow: 0 3px 10px rgba(42,127,207,0.35);
+}
+.tooth-btn.selected.status-completed .tooth-shape {
+    background: linear-gradient(135deg, var(--success), #2bc47f);
+    border-color: #0f7a4c;
+    box-shadow: 0 3px 10px rgba(26,170,110,0.35);
+}
+
+.odontogram-readonly .tooth-btn { cursor: default; }
+.odontogram-readonly .tooth-btn:hover .tooth-shape { transform: none; border-color: var(--gray-200); }
+.odontogram-readonly .tooth-btn.selected:hover .tooth-shape { border-color: inherit; transform: none; }
+
+/* ── Per-tooth detail editor (below the chart) ── */
+.odonto-empty-hint {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: center;
+    padding: 18px;
+    color: var(--gray-400);
+    font-size: 0.85rem;
+    background: white;
+    border: 1px dashed var(--gray-200);
+    border-radius: 10px;
+}
+.tooth-detail-row {
+    background: white;
+    border: 1px solid var(--gray-100);
+    border-radius: 10px;
+    padding: 10px 14px;
+    margin-bottom: 8px;
+}
+.tooth-detail-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+.tooth-detail-badge {
+    background: var(--navy);
+    color: white;
+    font-weight: 800;
+    font-size: 0.72rem;
+    padding: 3px 9px;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+.tooth-detail-name { flex: 1; font-size: 0.82rem; color: var(--gray-600); font-weight: 600; }
+.tooth-detail-remove {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    padding: 4px 6px;
+    border-radius: 6px;
+    transition: var(--transition);
+    display: flex;
+}
+.tooth-detail-remove:hover { background: rgba(214,51,72,0.1); color: var(--danger); }
+.tooth-detail-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1.4fr;
+    gap: 8px;
+}
+.tooth-detail-fields select,
+.tooth-detail-fields input {
+    padding: 7px 10px;
+    border: 1.5px solid var(--gray-100);
+    border-radius: 7px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.78rem;
+    color: var(--gray-800);
+    background: white;
+}
+.tooth-detail-fields select:focus,
+.tooth-detail-fields input:focus { outline: none; border-color: var(--teal); }
+
+@media (max-width: 640px) {
+    .tooth-detail-fields { grid-template-columns: 1fr 1fr; }
+}
+
+/* Read-only status pills + detail table (patient view page) */
+.tooth-status-pill {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+.tooth-status-pill.status-planned     { background: rgba(224,139,26,0.12); color: var(--warning); }
+.tooth-status-pill.status-inprogress  { background: rgba(42,127,207,0.12); color: var(--info); }
+.tooth-status-pill.status-completed   { background: rgba(26,170,110,0.12); color: var(--success); }
+
+.tooth-detail-table { margin-top: 4px; }
+.tooth-detail-table th, .tooth-detail-table td { font-size: 0.8rem; }
+
+@media (max-width: 480px) {
+    .odontogram-wrap { padding: 14px 8px; }
+    .odonto-row { gap: 2px; }
+}

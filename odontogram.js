@@ -1,12 +1,10 @@
 // ============================================================
-// ODONTOGRAM — Interactive Tooth Chart (FDI Two-Digit Notation)
-// Save as: assets/odontogram.js
+// ODONTOGRAM v2 — Interactive Tooth Chart with Per-Tooth Detail
+// Save as: assets/odontogram.js  (replaces the v1 file)
 // ============================================================
 // FDI notation: first digit = quadrant (1=upper right, 2=upper left,
 // 3=lower left, 4=lower right), second digit = tooth position
 // (1=central incisor ... 8=third molar/wisdom tooth).
-// Layout mirrors real clinical charts: 18 sits directly above 48,
-// 11 directly above 41, so upper/lower on the same side line up.
 
 const FDI_UPPER = [18,17,16,15,14,13,12,11, 21,22,23,24,25,26,27,28];
 const FDI_LOWER = [48,47,46,45,44,43,42,41, 31,32,33,34,35,36,37,38];
@@ -17,6 +15,12 @@ const TOOTH_NAMES = {
     6: 'First Molar', 7: 'Second Molar', 8: 'Third Molar (Wisdom)'
 };
 function toothName(fdi) { return TOOTH_NAMES[fdi % 10] || 'Tooth'; }
+
+const STATUS_META = {
+    planned:     { label: 'Planned',     cls: 'status-planned' },
+    in_progress: { label: 'In Progress', cls: 'status-inprogress' },
+    completed:   { label: 'Completed',   cls: 'status-completed' },
+};
 
 function buildToothButton(fdi) {
     const btn = document.createElement('button');
@@ -60,63 +64,175 @@ function buildChartSkeleton(container) {
     container.appendChild(labelsBottom);
 }
 
-/**
- * Interactive odontogram — click a tooth to toggle it as "involved".
- * @param {HTMLElement} container       empty <div> to render into
- * @param {string} initialCsv           e.g. "18,17,21,41" (already-selected teeth)
- * @param {HTMLInputElement} hiddenInput hidden form field synced with selection (CSV)
- * @param {Function} [onChange]         (selectedArray, upperCount, lowerCount) => void
- */
-function initOdontogram(container, initialCsv, hiddenInput, onChange) {
-    buildChartSkeleton(container);
+// Accepts either the new JSON-array format or the legacy plain-CSV
+// format from before per-tooth detail existed, and normalizes both
+// into a Map<fdi, {status, shade, size, notes}>.
+function parseInitial(initial) {
+    const map = new Map();
+    if (!initial) return map;
+    let arr = null;
+    try { arr = JSON.parse(initial); } catch (e) { arr = null; }
 
-    const selected = new Set(
-        (initialCsv || '').split(',').map(s => s.trim()).filter(Boolean).map(Number)
-    );
-
-    function applyClasses() {
-        container.querySelectorAll('.tooth-btn').forEach(btn => {
-            btn.classList.toggle('selected', selected.has(Number(btn.dataset.fdi)));
+    if (Array.isArray(arr)) {
+        arr.forEach(t => {
+            const fdi = Number(t.fdi);
+            if (fdi) map.set(fdi, {
+                status: t.status || 'planned',
+                shade: t.shade || '',
+                size: t.size || '',
+                notes: t.notes || ''
+            });
+        });
+    } else {
+        String(initial).split(',').map(s => s.trim()).filter(Boolean).forEach(s => {
+            const fdi = Number(s);
+            if (fdi) map.set(fdi, { status: 'planned', shade: '', size: '', notes: '' });
         });
     }
+    return map;
+}
 
-    function sync() {
-        const arr = Array.from(selected).sort((a, b) => a - b);
-        if (hiddenInput) hiddenInput.value = arr.join(',');
-        const upper = arr.filter(f => f >= 11 && f <= 28).length;
-        const lower = arr.filter(f => f >= 31 && f <= 48).length;
-        if (typeof onChange === 'function') onChange(arr, upper, lower);
-    }
-
-    container.querySelectorAll('.tooth-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const fdi = Number(btn.dataset.fdi);
-            selected.has(fdi) ? selected.delete(fdi) : selected.add(fdi);
-            applyClasses();
-            sync();
-        });
-    });
-
-    applyClasses();
-    sync();
-
-    return {
-        getSelected: () => Array.from(selected).sort((a, b) => a - b),
-        clear: () => { selected.clear(); applyClasses(); sync(); },
-        setSelected: (arr) => { selected.clear(); (arr || []).forEach(f => selected.add(Number(f))); applyClasses(); sync(); }
-    };
+function teethMapToArray(teeth) {
+    return Array.from(teeth.entries())
+        .sort((a, b) => a[0] - b[0])
+        .map(([fdi, d]) => ({ fdi, ...d }));
 }
 
 /**
- * Read-only odontogram — for patient detail pages. No click handlers.
+ * Full interactive odontogram: click a tooth to add/remove it, then set
+ * its status/shade/size/notes in the detail list that appears below.
+ * @param {HTMLElement} chartContainer   empty <div> for the tooth chart
+ * @param {HTMLElement} detailsContainer empty <div> for the per-tooth editor rows
+ * @param {string} initialData           JSON array (new) or CSV (legacy) of prior selection
+ * @param {HTMLInputElement} hiddenInput hidden field synced with JSON.stringify(selection)
+ * @param {Function} [onChange]          (teethArray, upperCount, lowerCount) => void
  */
-function renderReadOnlyOdontogram(container, csv) {
-    buildChartSkeleton(container);
-    container.classList.add('odontogram-readonly');
+function initOdontogramAdvanced(chartContainer, detailsContainer, initialData, hiddenInput, onChange) {
+    buildChartSkeleton(chartContainer);
+    const teeth = parseInitial(initialData);
 
-    const selected = new Set((csv || '').split(',').map(s => s.trim()).filter(Boolean).map(Number));
-    container.querySelectorAll('.tooth-btn').forEach(btn => {
-        btn.classList.toggle('selected', selected.has(Number(btn.dataset.fdi)));
-        btn.disabled = true;
+    function pushChange(arr) {
+        if (hiddenInput) hiddenInput.value = JSON.stringify(arr);
+        const upper = arr.filter(t => t.fdi >= 11 && t.fdi <= 28).length;
+        const lower = arr.filter(t => t.fdi >= 31 && t.fdi <= 48).length;
+        if (typeof onChange === 'function') onChange(arr, upper, lower);
+    }
+
+    function renderChartColors() {
+        chartContainer.querySelectorAll('.tooth-btn').forEach(btn => {
+            const fdi = Number(btn.dataset.fdi);
+            const t = teeth.get(fdi);
+            btn.classList.remove('selected', 'status-planned', 'status-inprogress', 'status-completed');
+            if (t) btn.classList.add('selected', STATUS_META[t.status]?.cls || 'status-planned');
+        });
+    }
+
+    function renderDetails() {
+        detailsContainer.innerHTML = '';
+        if (teeth.size === 0) {
+            detailsContainer.innerHTML = `<div class="odonto-empty-hint"><i class="bi bi-hand-index-thumb"></i> Tap teeth on the chart above to add detail</div>`;
+            return;
+        }
+        Array.from(teeth.keys()).sort((a, b) => a - b).forEach(fdi => {
+            const d = teeth.get(fdi);
+            const row = document.createElement('div');
+            row.className = 'tooth-detail-row';
+            row.innerHTML = `
+                <div class="tooth-detail-head">
+                    <span class="tooth-detail-badge">${fdi}</span>
+                    <span class="tooth-detail-name">${toothName(fdi)}</span>
+                    <button type="button" class="tooth-detail-remove" title="Remove tooth"><i class="bi bi-x-lg"></i></button>
+                </div>
+                <div class="tooth-detail-fields">
+                    <select class="td-status">
+                        <option value="planned">Planned</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                    </select>
+                    <input type="text" class="td-shade" placeholder="Shade (e.g. A3)" value="${d.shade || ''}">
+                    <input type="text" class="td-size" placeholder="Size/Code" value="${d.size || ''}">
+                    <input type="text" class="td-notes" placeholder="Notes (optional)" value="${d.notes || ''}">
+                </div>`;
+            row.querySelector('.td-status').value = d.status;
+
+            row.querySelector('.td-status').addEventListener('change', e => {
+                d.status = e.target.value;
+                renderChartColors();
+                pushChange(teethMapToArray(teeth));
+            });
+            // Text fields: update state + hidden input on every keystroke, but
+            // DON'T re-render the whole detail list (that would steal focus
+            // out of the input the admin is actively typing in).
+            row.querySelector('.td-shade').addEventListener('input', e => { d.shade = e.target.value; pushChange(teethMapToArray(teeth)); });
+            row.querySelector('.td-size').addEventListener('input', e => { d.size = e.target.value; pushChange(teethMapToArray(teeth)); });
+            row.querySelector('.td-notes').addEventListener('input', e => { d.notes = e.target.value; pushChange(teethMapToArray(teeth)); });
+
+            row.querySelector('.tooth-detail-remove').addEventListener('click', () => {
+                teeth.delete(fdi);
+                renderChartColors();
+                renderDetails();
+                pushChange(teethMapToArray(teeth));
+            });
+            detailsContainer.appendChild(row);
+        });
+    }
+
+    chartContainer.querySelectorAll('.tooth-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const fdi = Number(btn.dataset.fdi);
+            if (teeth.has(fdi)) teeth.delete(fdi);
+            else teeth.set(fdi, { status: 'planned', shade: '', size: '', notes: '' });
+            renderChartColors();
+            renderDetails();
+            pushChange(teethMapToArray(teeth));
+        });
     });
+
+    renderChartColors();
+    renderDetails();
+    pushChange(teethMapToArray(teeth));
+
+    return { getData: () => teethMapToArray(teeth) };
+}
+
+/**
+ * Read-only chart + detail table — for the patient detail page.
+ * @param {HTMLElement} chartContainer
+ * @param {HTMLElement} [detailsContainer] optional table of per-tooth status/shade/size/notes
+ * @param {string|Array} data JSON string or already-parsed array of tooth records
+ */
+function renderReadOnlyOdontogramAdvanced(chartContainer, detailsContainer, data) {
+    buildChartSkeleton(chartContainer);
+    chartContainer.classList.add('odontogram-readonly');
+
+    const teeth = parseInitial(typeof data === 'string' ? data : JSON.stringify(data || []));
+
+    chartContainer.querySelectorAll('.tooth-btn').forEach(btn => {
+        const fdi = Number(btn.dataset.fdi);
+        const t = teeth.get(fdi);
+        btn.disabled = true;
+        if (t) btn.classList.add('selected', STATUS_META[t.status]?.cls || 'status-planned');
+    });
+
+    if (!detailsContainer) return;
+    detailsContainer.innerHTML = '';
+    if (teeth.size === 0) return;
+
+    const table = document.createElement('table');
+    table.className = 'dp-table tooth-detail-table';
+    table.innerHTML = `<thead><tr><th>Tooth</th><th>Status</th><th>Shade</th><th>Size</th><th>Notes</th></tr></thead><tbody></tbody>`;
+    const tbody = table.querySelector('tbody');
+    Array.from(teeth.keys()).sort((a, b) => a - b).forEach(fdi => {
+        const d = teeth.get(fdi);
+        const meta = STATUS_META[d.status] || STATUS_META.planned;
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><strong>#${fdi}</strong> <span style="color:var(--gray-400);font-size:0.78rem;">${toothName(fdi)}</span></td>
+            <td><span class="tooth-status-pill ${meta.cls}">${meta.label}</span></td>
+            <td>${d.shade || '—'}</td>
+            <td>${d.size || '—'}</td>
+            <td>${d.notes || '—'}</td>`;
+        tbody.appendChild(tr);
+    });
+    detailsContainer.appendChild(table);
 }
