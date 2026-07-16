@@ -16,6 +16,13 @@ function nav_active($dir, $file = '') {
     if ($file && $current_page === $file) return 'active';
     return '';
 }
+
+// FIX: clamp to 0 so root-level pages (e.g. /index.php, /settings.php)
+// don't produce a negative count and crash str_repeat() on PHP 8+.
+function rel_path(): string {
+    $depth = substr_count($_SERVER['PHP_SELF'], '/') - 2;
+    return str_repeat('../', max(0, $depth));
+}
 ?>
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
@@ -33,7 +40,7 @@ function nav_active($dir, $file = '') {
     <nav class="sidebar-nav">
         <span class="nav-group-label">Main</span>
         
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>index.php" 
+        <a href="<?php echo rel_path(); ?>index.php" 
            class="nav-item <?php echo nav_active('', 'index.php'); ?>">
             <i class="bi bi-speedometer2"></i>
             Dashboard
@@ -41,13 +48,13 @@ function nav_active($dir, $file = '') {
 
         <span class="nav-group-label">Patients</span>
 
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>customers/list.php" 
+        <a href="<?php echo rel_path(); ?>customers/list.php" 
            class="nav-item <?php echo nav_active('customers'); ?>">
             <i class="bi bi-people-fill"></i>
             All Patients
         </a>
 
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>customers/create.php" 
+        <a href="<?php echo rel_path(); ?>customers/create.php" 
            class="nav-item <?php echo ($current_dir === 'customers' && $current_page === 'create.php') ? 'active' : ''; ?>">
             <i class="bi bi-person-plus-fill"></i>
             Add Patient
@@ -55,13 +62,13 @@ function nav_active($dir, $file = '') {
 
         <span class="nav-group-label">Scheduling</span>
 
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>appointments/list.php" 
+        <a href="<?php echo rel_path(); ?>appointments/list.php" 
            class="nav-item <?php echo nav_active('appointments'); ?>">
             <i class="bi bi-calendar3"></i>
             Appointments
         </a>
 
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>appointments/create.php" 
+        <a href="<?php echo rel_path(); ?>appointments/create.php" 
            class="nav-item <?php echo ($current_dir === 'appointments' && $current_page === 'create.php') ? 'active' : ''; ?>">
             <i class="bi bi-calendar-plus"></i>
             New Appointment
@@ -69,7 +76,7 @@ function nav_active($dir, $file = '') {
 
         <span class="nav-group-label">Communication</span>
 
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>messages/index.php" 
+        <a href="<?php echo rel_path(); ?>messages/index.php" 
            class="nav-item <?php echo nav_active('messages'); ?>">
             <i class="bi bi-chat-dots-fill"></i>
             Messages

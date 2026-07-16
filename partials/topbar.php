@@ -1,3 +1,9 @@
+<?php
+// FIX: clamp to 0 so root-level pages (e.g. /index.php, /settings.php)
+// don't produce a negative count and crash str_repeat() on PHP 8+.
+$__depth = substr_count($_SERVER['PHP_SELF'], '/') - 2;
+$__rel   = str_repeat('../', max(0, $__depth));
+?>
 <header class="topbar">
     <button class="topbar-toggle" id="sidebarToggle">
         <i class="bi bi-list"></i>
@@ -9,7 +15,7 @@
     </div>
 
     <div class="topbar-right">
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>messages/index.php" 
+        <a href="<?php echo $__rel; ?>messages/index.php" 
            class="topbar-icon-btn" title="Messages">
             <i class="bi bi-chat-dots"></i>
             <?php 
@@ -19,7 +25,7 @@
             }
             ?>
         </a>
-        <a href="<?php echo str_repeat('../', substr_count($_SERVER['PHP_SELF'], '/')-2); ?>appointments/list.php" 
+        <a href="<?php echo $__rel; ?>appointments/list.php" 
            class="topbar-icon-btn" title="Appointments">
             <i class="bi bi-calendar-event"></i>
         </a>
