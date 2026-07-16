@@ -37,7 +37,21 @@ $__rel   = str_repeat('../', max(0, $__depth));
         </div>
 <form action="<?php echo $__rel; ?>auth/logout.php" method="POST" class="topbar-icon-form" 
       onsubmit="return confirm('Are you sure you want to logout?');">
-    <?php echo csrf_field(); // or however you output your hidden CSRF input ?>
+    <?php
+    // FIX: topbar.php is included by every admin page, but not every
+    // page loads the auth/session bootstrap that defines csrf_field()
+    // first (messages/index.php was one such page — that's what caused
+    // "Call to undefined function csrf_field()" and fataled the whole
+    // page). Rather than trust every future include site to remember
+    // the bootstrap, guard it here: use csrf_field() if it's loaded,
+    // otherwise fall back to reading the session token directly so the
+    // logout form still carries a valid CSRF token either way.
+    if (function_exists('csrf_field')) {
+        echo csrf_field();
+    } elseif (isset($_SESSION['csrf_token'])) {
+        echo '<input type="hidden" name="csrf_token" value="' . htmlspecialchars($_SESSION['csrf_token']) . '">';
+    }
+    ?>
     <button type="submit" class="topbar-icon-btn" title="Logout">
         <i class="bi bi-box-arrow-right"></i>
     </button>
