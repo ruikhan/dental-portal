@@ -33,4 +33,20 @@ try {
 } catch (PDOException $e) {
     die(json_encode(['error' => 'Connection failed: ' . $e->getMessage()]));
 }
+
+// ── Odontogram helper ───────────────────────────────────────
+// Converts a comma-separated list of FDI tooth codes (e.g. "18,17,21,41",
+// as produced by the odontogram widget) into [upper_count, lower_count].
+// FDI quadrants 1-2 (codes 11-28) = upper arch, quadrants 3-4 (31-48) = lower arch.
+if (!function_exists('odonto_counts')) {
+    function odonto_counts(string $teethCsv): array {
+        $upper = 0; $lower = 0;
+        foreach (array_filter(explode(',', $teethCsv)) as $t) {
+            $t = (int)trim($t);
+            if ($t >= 11 && $t <= 28) $upper++;
+            elseif ($t >= 31 && $t <= 48) $lower++;
+        }
+        return [$upper, $lower];
+    }
+}
 ?>
