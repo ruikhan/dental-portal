@@ -1,6 +1,6 @@
 <?php
-require_once '../../auth/session.php';
-require_once '../../db_conn.php';
+require_once '../auth/session.php';
+require_once '../db_conn.php';
 
 // Already logged in
 if (!empty($_SESSION['patient_id'])) {
