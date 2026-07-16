@@ -191,6 +191,7 @@ function dp_status_color($status) {
         /* "Next Appointment" hero banner keeps its navy gradient but
            picks up window chrome + a softer, layered shadow. */
         .card-dp[style*="linear-gradient"] {
+            background: linear-gradient(135deg, var(--navy), var(--navy-soft)) !important;
             border-radius: var(--mac-radius-lg) !important;
             box-shadow: 0 1px 2px rgba(15,45,74,0.1), 0 24px 48px -16px rgba(15,45,74,0.45) !important;
             border: 1px solid rgba(255,255,255,0.08) !important;
