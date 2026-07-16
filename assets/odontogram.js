@@ -80,6 +80,14 @@ function buildChartSkeleton(container, interactive) {
     labelsBottom.innerHTML = `<span>Lower Right</span><span>Lower Left</span>`;
     container.appendChild(labelsBottom);
 
+    // Only rendered visually on very narrow screens (see odontogram.css) —
+    // the full 16-tooth arch needs horizontal scroll below ~380px even at
+    // minimum tooth size, so this hints that there's more to see.
+    const swipeHint = document.createElement('div');
+    swipeHint.className = 'odonto-swipe-hint';
+    swipeHint.innerHTML = `<i class="bi bi-arrow-left-right"></i> Swipe to see all teeth`;
+    container.appendChild(swipeHint);
+
     container.appendChild(buildLegend(interactive));
 }
 
@@ -283,8 +291,18 @@ function renderReadOnlyOdontogramAdvanced(chartContainer, detailsContainer, data
     badgeRow.innerHTML = buildCountBadges(upper, lower, teeth.size);
     detailsContainer.appendChild(badgeRow);
 
+    // NOTE: intentionally NOT using the app's global ".dp-table" class here.
+    // style.css hides every ".dp-table" outright below 768px (it expects a
+    // matching ".mobile-card-list" companion, which this table never had) —
+    // that would make this whole table vanish on any phone/tablet. Instead
+    // ".tooth-detail-table" gets its own self-contained responsive styling
+    // in odontogram.css and just scrolls horizontally inside ".table-wrap"
+    // on narrow screens, same as wide tables do elsewhere in the app.
+    const wrap = document.createElement('div');
+    wrap.className = 'table-wrap';
+
     const table = document.createElement('table');
-    table.className = 'dp-table tooth-detail-table';
+    table.className = 'tooth-detail-table';
     table.innerHTML = `<thead><tr><th>Tooth</th><th>Status</th><th>Shade</th><th>Size</th><th>Notes</th></tr></thead><tbody></tbody>`;
     const tbody = table.querySelector('tbody');
     Array.from(teeth.keys()).sort((a, b) => a - b).forEach(fdi => {
@@ -292,12 +310,13 @@ function renderReadOnlyOdontogramAdvanced(chartContainer, detailsContainer, data
         const meta = STATUS_META[d.status] || STATUS_META.planned;
         const tr = document.createElement('tr');
         tr.innerHTML = `
-            <td><strong>#${fdi}</strong> <span style="color:var(--gray-400);font-size:0.78rem;">${toothName(fdi)}</span></td>
+            <td><strong>#${fdi}</strong> <span class="tooth-detail-table-sub">${toothName(fdi)}</span></td>
             <td><span class="tooth-status-pill ${meta.cls}">${meta.label}</span></td>
             <td>${d.shade || '—'}</td>
             <td>${d.size || '—'}</td>
             <td>${d.notes || '—'}</td>`;
         tbody.appendChild(tr);
     });
-    detailsContainer.appendChild(table);
+    wrap.appendChild(table);
+    detailsContainer.appendChild(wrap);
 }

@@ -10,6 +10,21 @@
     border-radius: var(--radius);
     padding: 18px 14px;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* smooth momentum scroll on iOS */
+}
+
+/* Hidden by default; shown only on very narrow screens where the chart
+   can't fully fit without horizontal scroll (see breakpoints below). */
+.odonto-swipe-hint {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    color: var(--gray-400);
+    padding: 4px 0 0;
+    min-width: max-content;
 }
 
 .odonto-quad-labels {
@@ -269,7 +284,47 @@
 
 /* ============================
    READ-ONLY DETAIL TABLE (patient view page)
+   Deliberately self-contained — does NOT rely on the app's global
+   .dp-table styling/hiding rules, so it stays visible and legible on
+   every screen size on its own terms (see notes in odontogram.js).
    ============================ */
+.tooth-detail-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 480px; /* keeps columns readable; .table-wrap scrolls it on narrow screens */
+}
+.tooth-detail-table thead {
+    background: var(--gray-50);
+    border-bottom: 2px solid var(--gray-100);
+}
+.tooth-detail-table thead th {
+    padding: 10px 14px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--gray-600);
+    text-align: left;
+    white-space: nowrap;
+}
+.tooth-detail-table tbody tr {
+    border-bottom: 1px solid var(--gray-100);
+}
+.tooth-detail-table tbody tr:last-child { border-bottom: none; }
+.tooth-detail-table tbody tr:hover { background: var(--gray-50); }
+.tooth-detail-table tbody td {
+    padding: 11px 14px;
+    font-size: 0.82rem;
+    color: var(--gray-800);
+    vertical-align: middle;
+}
+.tooth-detail-table-sub {
+    color: var(--gray-400);
+    font-size: 0.75rem;
+    display: block;
+    margin-top: 1px;
+}
+
 .tooth-status-pill {
     display: inline-flex;
     align-items: center;
@@ -301,8 +356,51 @@
 }
 .odonto-empty-hint i { font-size: 1.8rem; opacity: 0.5; }
 
+/* ============================
+   RESPONSIVE — tablets & small laptops
+   ============================ */
+@media (max-width: 768px) {
+    .tooth-btn { width: clamp(22px, 6vw, 34px); }
+    .odonto-toolbar { gap: 12px; }
+}
+
+/* ============================
+   RESPONSIVE — phones
+   ============================ */
 @media (max-width: 480px) {
     .odontogram-wrap { padding: 14px 8px; }
-    .odonto-row { gap: 2px; }
-    .odonto-legend { gap: 4px 10px; font-size: 0.66rem; }
+    .odonto-row { gap: 3px; }
+    .odonto-midline { margin: 0 3px; }
+    .odonto-legend { gap: 5px 10px; font-size: 0.66rem; padding-top: 10px; }
+    .odonto-legend-hint { flex-basis: 100%; justify-content: center; }
+
+    /* Toolbar stacks so the Clear All button gets a full-width, easy tap
+       target instead of being squeezed next to the badges. */
+    .odonto-toolbar { flex-direction: column; align-items: stretch; }
+    .odonto-count-badges { justify-content: center; }
+    .odonto-clear-btn { justify-content: center; }
+
+    .tooth-detail-fields { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .tooth-detail-head { flex-wrap: wrap; }
+}
+
+/* ============================
+   RESPONSIVE — small phones (the arch needs horizontal scroll
+   even at minimum tooth width, so surface the swipe hint)
+   ============================ */
+@media (max-width: 400px) {
+    .tooth-btn { width: 20px; }
+    .tooth-num { font-size: 0.52rem; }
+    .odonto-swipe-hint { display: flex; }
+    .odonto-quad-labels { font-size: 0.58rem; }
+    .tooth-detail-fields { grid-template-columns: 1fr; }
+    .odonto-badge { font-size: 0.7rem; padding: 5px 10px; }
+}
+
+/* ============================
+   RESPONSIVE — landscape phones / very short viewports
+   ============================ */
+@media (max-height: 420px) and (orientation: landscape) {
+    .odontogram-wrap { padding: 10px 8px; }
+    .tooth-btn { min-height: 34px; }
 }
