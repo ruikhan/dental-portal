@@ -49,7 +49,9 @@ $paid_pct = $total_bill_val > 0 ? min(100, round(($amount_paid_val / $total_bill
 $completed_count = count(array_filter($appts, fn($a) => $a['status'] === 'completed'));
 $total_appts     = count($appts);
 
-// Map appointment status -> a color token used for the timeline accent.
+// Map appointment status -> a color token used for the timeline accent,
+// and a matching "calendar icon" header tint (mirrors macOS Calendar's
+// per-context colored header strip).
 function dp_status_color($status) {
     return match ($status) {
         'completed' => 'var(--success, #22a06b)',
@@ -72,6 +74,212 @@ function dp_status_color($status) {
     <link href="../assets/style.css" rel="stylesheet">
     <link href="../assets/odontogram.css" rel="stylesheet">
     <link href="../assets/patient-portal.css" rel="stylesheet">
+
+    <!--
+        Premium "macOS" pass for this page only.
+        Scoped under body/.page-content so nothing here leaks into other
+        pages that reuse patient-portal.css. Layers translucency + soft
+        multi-stop shadows over the existing tokens (--navy, --teal,
+        --success, --warning, --gray-*) rather than replacing the palette,
+        so it stays visually consistent with the rest of the portal.
+    -->
+    <style>
+        :root {
+            --mac-radius-lg: 20px;
+            --mac-radius-md: 14px;
+            --mac-radius-sm: 10px;
+            --mac-glass: rgba(255, 255, 255, 0.72);
+            --mac-glass-strong: rgba(255, 255, 255, 0.85);
+            --mac-border: rgba(15, 45, 74, 0.08);
+            --mac-shadow-ambient: 0 1px 2px rgba(15, 45, 74, 0.04), 0 12px 28px -8px rgba(15, 45, 74, 0.14);
+            --mac-shadow-hover: 0 2px 4px rgba(15, 45, 74, 0.06), 0 20px 40px -10px rgba(15, 45, 74, 0.20);
+            --mac-ease: cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+        }
+
+        body {
+            background:
+                radial-gradient(1200px 600px at 15% -10%, rgba(20, 184, 166, 0.07), transparent 60%),
+                radial-gradient(1000px 700px at 100% 0%, rgba(15, 45, 74, 0.06), transparent 55%),
+                var(--gray-50, #f5f6f8);
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Outfit", sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page-content { padding-top: 28px; padding-bottom: 40px; }
+
+        /* ---------- Hero ---------- */
+        .customer-hero {
+            background: var(--mac-glass-strong);
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border: 1px solid var(--mac-border);
+            border-radius: var(--mac-radius-lg);
+            box-shadow: var(--mac-shadow-ambient);
+            padding: 22px 26px;
+            margin-bottom: 24px;
+            transition: box-shadow 0.35s var(--mac-ease);
+        }
+        .customer-hero-avatar {
+            box-shadow: 0 6px 16px -4px rgba(15, 45, 74, 0.28), inset 0 1px 0 rgba(255,255,255,0.25);
+        }
+        .customer-hero-name {
+            letter-spacing: -0.01em;
+        }
+        .btn-primary-dp {
+            border-radius: 980px !important; /* Apple's signature pill button */
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            box-shadow: 0 1px 1px rgba(15,45,74,0.06), 0 8px 18px -6px rgba(20,184,166,0.45);
+            transition: transform 0.18s var(--mac-ease), box-shadow 0.18s var(--mac-ease), filter 0.18s var(--mac-ease);
+        }
+        .btn-primary-dp:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.04);
+            box-shadow: 0 2px 4px rgba(15,45,74,0.08), 0 12px 24px -6px rgba(20,184,166,0.55);
+        }
+        .btn-primary-dp:active { transform: translateY(0) scale(0.98); }
+
+        /* ---------- Quick stats ---------- */
+        .dp-quickstats { gap: 14px; }
+        .dp-stat-card {
+            background: var(--mac-glass);
+            backdrop-filter: saturate(180%) blur(16px);
+            -webkit-backdrop-filter: saturate(180%) blur(16px);
+            border: 1px solid var(--mac-border);
+            border-radius: var(--mac-radius-md);
+            box-shadow: var(--mac-shadow-ambient);
+            transition: transform 0.28s var(--mac-ease), box-shadow 0.28s var(--mac-ease), background 0.28s var(--mac-ease);
+        }
+        .dp-stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--mac-shadow-hover);
+            background: var(--mac-glass-strong);
+        }
+        .dp-stat-icon {
+            border-radius: 12px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 4px 10px -3px rgba(15,45,74,0.18);
+        }
+        .dp-stat-value { letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+
+        /* ---------- Generic glass card shell ---------- */
+        .card-dp, .service-card {
+            background: var(--mac-glass-strong) !important;
+            backdrop-filter: saturate(180%) blur(20px);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            border: 1px solid var(--mac-border) !important;
+            border-radius: var(--mac-radius-lg) !important;
+            box-shadow: var(--mac-shadow-ambient) !important;
+        }
+
+        /* "Next Appointment" hero banner keeps its navy gradient but
+           picks up window chrome + a softer, layered shadow. */
+        .card-dp[style*="linear-gradient"] {
+            border-radius: var(--mac-radius-lg) !important;
+            box-shadow: 0 1px 2px rgba(15,45,74,0.1), 0 24px 48px -16px rgba(15,45,74,0.45) !important;
+            border: 1px solid rgba(255,255,255,0.08) !important;
+        }
+
+        /* ---------- macOS window-chrome signature ----------
+           A quiet nod to the OS: every panel header carries the three
+           traffic-light dots, desaturated so they read as texture/craft
+           rather than literal UI chrome. */
+        .mac-dots { display: inline-flex; gap: 6px; margin-right: 12px; vertical-align: middle; }
+        .mac-dots span {
+            width: 9px; height: 9px; border-radius: 50%; display: inline-block;
+            box-shadow: inset 0 0.5px 1px rgba(0,0,0,0.15);
+        }
+        .mac-dots span:nth-child(1) { background: #ff6159; }
+        .mac-dots span:nth-child(2) { background: #ffbd2e; }
+        .mac-dots span:nth-child(3) { background: #28c840; }
+
+        .service-card-header {
+            display: flex;
+            align-items: center;
+        }
+
+        /* ---------- Payment progress ---------- */
+        .payment-progress-track {
+            border-radius: 999px;
+            overflow: hidden;
+            background: var(--gray-100, #edf0f3);
+        }
+        .payment-progress-fill {
+            border-radius: 999px;
+            background: linear-gradient(90deg, var(--teal, #14b8a6), #0a8f8f);
+            transition: width 0.6s var(--mac-ease);
+        }
+
+        /* ---------- Status pills -> macOS segmented-control feel ---------- */
+        .status-pill {
+            border-radius: 999px !important;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            padding: 4px 12px !important;
+            border: 1px solid rgba(15,45,74,0.06);
+        }
+
+        /* ---------- Appointment timeline ---------- */
+        .appt-timeline { display: flex; flex-direction: column; gap: 10px; }
+        .appt-card {
+            background: var(--mac-glass-strong);
+            backdrop-filter: saturate(180%) blur(16px);
+            -webkit-backdrop-filter: saturate(180%) blur(16px);
+            border-radius: var(--mac-radius-md) !important;
+            box-shadow: var(--mac-shadow-ambient);
+            transition: transform 0.25s var(--mac-ease), box-shadow 0.25s var(--mac-ease);
+        }
+        .appt-card:hover {
+            transform: translateY(-2px) translateX(2px);
+            box-shadow: var(--mac-shadow-hover);
+        }
+        .appt-card-divider { background: var(--mac-border); }
+
+        /* Date block restyled as a miniature macOS Calendar app icon:
+           colored month strip + a bold day number on a white face. */
+        .appt-date-block {
+            width: 56px;
+            padding: 0 !important;
+            border-radius: 13px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px -4px rgba(15,45,74,0.35), 0 1px 0 rgba(255,255,255,0.5) inset;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+            background: #fff;
+        }
+        .appt-date-mon {
+            background: linear-gradient(180deg, #ff6b57, #ee4a3e);
+            color: #fff;
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 3px 0;
+            order: -1; /* month strip on top, like the Calendar icon */
+        }
+        .appt-date-day {
+            font-size: 1.4rem;
+            font-weight: 700;
+            line-height: 1.15;
+            color: var(--navy, #0f2d4a);
+            padding-top: 3px;
+            letter-spacing: -0.02em;
+        }
+        .appt-date-yr {
+            font-size: 0.6rem;
+            color: var(--gray-400, #98a2b3);
+            padding-bottom: 4px;
+            font-weight: 600;
+        }
+
+        /* ---------- Section headings ---------- */
+        h2[style*="DM Serif Display"] { letter-spacing: -0.01em; }
+    </style>
 </head>
 <body>
 <?php include 'partials/topbar.php'; ?>
@@ -131,7 +339,7 @@ function dp_status_color($status) {
     ?>
     <div class="card-dp" style="margin-bottom:24px;background:linear-gradient(135deg,var(--navy),var(--navy-soft));color:white;border:none;overflow:visible;">
         <div style="padding:20px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;">
-            <div style="width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;">
+            <div style="width:56px;height:56px;background:rgba(255,255,255,0.15);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0;box-shadow:inset 0 1px 0 rgba(255,255,255,0.2), 0 6px 14px -6px rgba(0,0,0,0.4);">
                 <i class="bi bi-calendar-check"></i>
             </div>
             <div style="flex:1;min-width:200px;">
@@ -168,8 +376,9 @@ function dp_status_color($status) {
         <?php if ($s): ?>
         <div class="service-card">
             <div class="service-card-header">
+                <span class="mac-dots"><span></span><span></span><span></span></span>
                 <div class="service-card-title"><i class="bi bi-tooth"></i> Your Treatment Summary</div>
-                <span style="font-size:0.72rem;opacity:0.7;">Updated <?php echo date('M j, Y', strtotime($s['date_created'])); ?></span>
+                <span style="font-size:0.72rem;opacity:0.7;margin-left:auto;">Updated <?php echo date('M j, Y', strtotime($s['date_created'])); ?></span>
             </div>
 
             <div class="service-tooth-info">
@@ -260,8 +469,8 @@ function dp_status_color($status) {
                 ?>
                 <div class="appt-card" style="border-left:4px solid <?php echo dp_status_color($a['status']); ?>;">
                     <div class="appt-date-block">
-                        <div class="appt-date-day"><?php echo $ad->format('d'); ?></div>
                         <div class="appt-date-mon"><?php echo $ad->format('M'); ?></div>
+                        <div class="appt-date-day"><?php echo $ad->format('d'); ?></div>
                         <div class="appt-date-yr"><?php echo $ad->format('Y'); ?></div>
                     </div>
                     <div class="appt-card-divider"></div>
