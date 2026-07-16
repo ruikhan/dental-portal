@@ -40,6 +40,25 @@ $initials = strtoupper(substr($parts[0], 0, 1)) . (isset($parts[1]) ? strtoupper
 
 $bal = ($s['total_bill'] ?? 0) - ($s['amount_paid'] ?? 0);
 $ps  = $s['payment_status'] ?? 'pending';
+
+// --- Quick-stats derived values ---
+$total_bill_val  = (float)($s['total_bill'] ?? 0);
+$amount_paid_val = (float)($s['amount_paid'] ?? 0);
+$paid_pct = $total_bill_val > 0 ? min(100, round(($amount_paid_val / $total_bill_val) * 100)) : ($s ? 100 : 0);
+
+$completed_count = count(array_filter($appts, fn($a) => $a['status'] === 'completed'));
+$total_appts     = count($appts);
+
+// Map appointment status -> a color token used for the timeline accent.
+function dp_status_color($status) {
+    return match ($status) {
+        'completed' => 'var(--success, #22a06b)',
+        'scheduled' => 'var(--teal, #14b8a6)',
+        'cancelled', 'canceled' => 'var(--gray-300, #c7ccd4)',
+        'no_show' => 'var(--warning, #e0a339)',
+        default => 'var(--gray-300, #c7ccd4)',
+    };
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -52,6 +71,7 @@ $ps  = $s['payment_status'] ?? 'pending';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
     <link href="../assets/style.css" rel="stylesheet">
     <link href="../assets/odontogram.css" rel="stylesheet">
+    <link href="../assets/patient-portal.css" rel="stylesheet">
 </head>
 <body>
 <?php include 'partials/topbar.php'; ?>
@@ -72,6 +92,36 @@ $ps  = $s['payment_status'] ?? 'pending';
             <a href="messages.php" class="btn-primary-dp">
                 <i class="bi bi-chat-dots-fill"></i> Message Clinic
             </a>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="dp-quickstats">
+        <div class="dp-stat-card">
+            <div class="dp-stat-icon teal"><i class="bi bi-calendar-event"></i></div>
+            <div class="dp-stat-label">Next Visit</div>
+            <div class="dp-stat-value">
+                <?php echo $next_appt ? (new DateTime($next_appt['appointment_date']))->format('M j') : '—'; ?>
+            </div>
+        </div>
+        <div class="dp-stat-card">
+            <div class="dp-stat-icon <?php echo $bal > 0 ? 'warning' : 'success'; ?>">
+                <i class="bi bi-cash-coin"></i>
+            </div>
+            <div class="dp-stat-label">Balance Due</div>
+            <div class="dp-stat-value"><?php echo $bal > 0 ? '₱' . number_format($bal, 2) : '₱0.00'; ?></div>
+        </div>
+        <div class="dp-stat-card">
+            <div class="dp-stat-icon navy"><i class="bi bi-clipboard2-check"></i></div>
+            <div class="dp-stat-label">Total Visits</div>
+            <div class="dp-stat-value"><?php echo $total_appts; ?></div>
+        </div>
+        <div class="dp-stat-card">
+            <div class="dp-stat-icon <?php echo $ps === 'paid' ? 'success' : ($ps === 'partial' ? 'warning' : 'gray'); ?>">
+                <i class="bi bi-receipt-cutoff"></i>
+            </div>
+            <div class="dp-stat-label">Payment Status</div>
+            <div class="dp-stat-value" style="font-size:1.05rem;"><?php echo ucfirst($ps); ?></div>
         </div>
     </div>
 
@@ -150,6 +200,19 @@ $ps  = $s['payment_status'] ?? 'pending';
             </div>
             <?php endif; ?>
 
+            <!-- Payment progress -->
+            <div class="service-spec-row" style="flex-direction:column;align-items:stretch;gap:6px;">
+                <div class="payment-progress-wrap">
+                    <div class="payment-progress-track">
+                        <div class="payment-progress-fill" style="width:<?php echo $paid_pct; ?>%;"></div>
+                    </div>
+                    <div class="payment-progress-label">
+                        <span><?php echo $paid_pct; ?>% paid</span>
+                        <span><?php echo $bal > 0 ? '₱' . number_format($bal, 2) . ' remaining' : 'Fully settled'; ?></span>
+                    </div>
+                </div>
+            </div>
+
             <div class="billing-row">
                 <span class="billing-label"><i class="bi bi-receipt" style="color:var(--teal);margin-right:6px;"></i> Total Bill</span>
                 <span class="billing-amount">₱<?php echo number_format($s['total_bill'], 2); ?></span>
@@ -181,16 +244,21 @@ $ps  = $s['payment_status'] ?? 'pending';
 
         <!-- Appointment History -->
         <div>
-            <h2 style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;color:var(--navy);margin-bottom:14px;">
-                <i class="bi bi-calendar3" style="color:var(--teal);margin-right:8px;font-size:1rem;"></i>
-                Appointment History
+            <h2 style="font-family:'DM Serif Display',serif;font-size:1.3rem;font-weight:400;color:var(--navy);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+                <span><i class="bi bi-calendar3" style="color:var(--teal);margin-right:8px;font-size:1rem;"></i>Appointment History</span>
+                <?php if ($total_appts > 0): ?>
+                <span style="font-family:'Outfit',sans-serif;font-size:0.72rem;font-weight:600;color:var(--gray-500);text-transform:none;">
+                    <?php echo $completed_count; ?> completed of <?php echo $total_appts; ?>
+                </span>
+                <?php endif; ?>
             </h2>
 
             <?php if (count($appts) > 0): ?>
+                <div class="appt-timeline">
                 <?php foreach ($appts as $a):
                     $ad = new DateTime($a['appointment_date']);
                 ?>
-                <div class="appt-card">
+                <div class="appt-card" style="border-left:4px solid <?php echo dp_status_color($a['status']); ?>;">
                     <div class="appt-date-block">
                         <div class="appt-date-day"><?php echo $ad->format('d'); ?></div>
                         <div class="appt-date-mon"><?php echo $ad->format('M'); ?></div>
@@ -209,6 +277,7 @@ $ps  = $s['payment_status'] ?? 'pending';
                     </div>
                 </div>
                 <?php endforeach; ?>
+                </div>
             <?php else: ?>
             <div class="card-dp">
                 <div class="empty-state" style="padding:32px;">
