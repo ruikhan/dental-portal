@@ -6,6 +6,7 @@ const CACHE_NAME = 'dental-portal-v1';
 const STATIC_ASSETS = [
     '/assets/style.css',
     '/assets/app.js',
+    '/offline.php',
     'https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap',
     'https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css'
 ];
@@ -68,7 +69,7 @@ self.addEventListener('fetch', event => {
             fetch(event.request)
                 .then(response => response)
                 .catch(() => {
-                    return caches.match('/offline.php') || new Response(
+                    return caches.match('/offline.php').then(cached => cached || new Response(
                         `<!DOCTYPE html><html><head><title>Offline</title>
                         <style>body{font-family:sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:#0f2d4a;color:white;text-align:center;gap:16px;}
                         h1{font-size:2rem;}p{opacity:0.7;}a{color:#0fb3b3;text-decoration:none;}</style>
@@ -78,7 +79,7 @@ self.addEventListener('fetch', event => {
                         <a href="/">Try Again</a>
                         </body></html>`,
                         { headers: { 'Content-Type': 'text/html' } }
-                    );
+                    ));
                 })
         );
         return;

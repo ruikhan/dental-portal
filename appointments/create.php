@@ -88,7 +88,7 @@ if(isset($_POST['submit'])) {
                     <option value="trial" <?php echo (($_POST['appointment_type']??'trial') === 'trial') ? 'selected' : ''; ?>>Trial Fitting</option>
                     <option value="follow_up" <?php echo (($_POST['appointment_type']??'') === 'follow_up') ? 'selected' : ''; ?>>Follow-up</option>
                     <option value="final" <?php echo (($_POST['appointment_type']??'') === 'final') ? 'selected' : ''; ?>>Final Delivery</option>
-                    <option value="consultation" <?php echo (($_POST['appointment_type']??'') === 'consultation') ? 'selected' : ''; ?>>Consultation</option>
+                    <option value="consultation" <?php echo (($_POST['appointment_type']??'') === 'consultation') ? 'selected' : ''; ?>>Repair</option>
                 </select>
             </div>
         </div>
