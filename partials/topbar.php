@@ -35,5 +35,10 @@ $__rel   = str_repeat('../', max(0, $__depth));
             <div class="admin-avatar">AD</div>
             <span class="admin-name">Admin</span>
         </div>
+        <a href="<?php echo $__rel; ?>logout.php" 
+           class="topbar-icon-btn" title="Logout"
+           onclick="return confirm('Are you sure you want to logout?');">
+            <i class="bi bi-box-arrow-right"></i>
+        </a>
     </div>
 </header>
