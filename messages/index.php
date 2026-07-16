@@ -1,4 +1,16 @@
 <?php
+// FIX: this page was missing the admin auth/session include that every
+// other admin page loads. topbar.php calls csrf_field() (for the logout
+// form's hidden CSRF token) assuming it's already defined — without this
+// include, that function doesn't exist yet and the page fatals before
+// rendering anything: "Call to undefined function csrf_field()".
+//
+// Adjust the path/function name below if your other admin pages
+// (dashboard.php, customers/list.php, etc.) use a different filename or
+// a different login-guard function name — match whatever they already do.
+require_once '../auth/session.php';
+require_admin_login();
+
 include "../db_conn.php";
 
 // Get all customers that have messages, with unread count
