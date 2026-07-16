@@ -9,30 +9,32 @@ $initials = strtoupper(substr($parts[0] ?? '', 0, 1)) . (isset($parts[1]) ? strt
 $current_page = basename($_SERVER['PHP_SELF']);
 ?>
 <header class="topbar">
-    <div style="display:flex;align-items:center;gap:10px;">
-        <div class="brand-icon" style="width:36px;height:36px;font-size:1rem;flex-shrink:0;">
-            <i class="bi bi-tooth"></i>
+    <div class="topbar-inner">
+        <div style="display:flex;align-items:center;gap:10px;">
+            <div class="brand-icon" style="width:36px;height:36px;font-size:1rem;flex-shrink:0;">
+                <i class="bi bi-tooth"></i>
+            </div>
+            <span style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--navy);white-space:nowrap;">DentalPortal</span>
         </div>
-        <span style="font-family:'DM Serif Display',serif;font-size:1.1rem;color:var(--navy);white-space:nowrap;">DentalPortal</span>
-    </div>
 
-    <nav style="display:flex;gap:4px;margin-left:24px;">
-        <a href="dashboard.php" class="nav-item" style="color:<?php echo $current_page==='dashboard.php' ? 'var(--teal)' : 'var(--gray-600)'; ?>;padding:8px 14px;border-radius:8px;<?php echo $current_page==='dashboard.php' ? 'background:rgba(10,143,143,0.08);' : ''; ?>">
-            <i class="bi bi-speedometer2"></i> Dashboard
-        </a>
-        <a href="messages.php" class="nav-item" style="color:<?php echo $current_page==='messages.php' ? 'var(--teal)' : 'var(--gray-600)'; ?>;padding:8px 14px;border-radius:8px;<?php echo $current_page==='messages.php' ? 'background:rgba(10,143,143,0.08);' : ''; ?>">
-            <i class="bi bi-chat-dots-fill"></i> Messages
-        </a>
-    </nav>
+        <nav style="display:flex;gap:4px;margin-left:24px;">
+            <a href="dashboard.php" class="nav-item" style="color:<?php echo $current_page==='dashboard.php' ? 'var(--teal)' : 'var(--gray-600)'; ?>;padding:8px 14px;border-radius:8px;<?php echo $current_page==='dashboard.php' ? 'background:rgba(10,143,143,0.08);' : ''; ?>">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+            <a href="messages.php" class="nav-item" style="color:<?php echo $current_page==='messages.php' ? 'var(--teal)' : 'var(--gray-600)'; ?>;padding:8px 14px;border-radius:8px;<?php echo $current_page==='messages.php' ? 'background:rgba(10,143,143,0.08);' : ''; ?>">
+                <i class="bi bi-chat-dots-fill"></i> Messages
+            </a>
+        </nav>
 
-    <div class="topbar-right">
-        <div class="topbar-admin" style="cursor:default;">
-            <div class="admin-avatar"><?php echo htmlspecialchars($initials ?: 'P'); ?></div>
-            <span class="admin-name"><?php echo htmlspecialchars($patient['name']); ?></span>
+        <div class="topbar-right">
+            <div class="topbar-admin" style="cursor:default;">
+                <div class="admin-avatar"><?php echo htmlspecialchars($initials ?: 'P'); ?></div>
+                <span class="admin-name"><?php echo htmlspecialchars($patient['name']); ?></span>
+            </div>
+            <a href="logout.php" class="topbar-icon-btn" title="Log out">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
         </div>
-        <a href="logout.php" class="topbar-icon-btn" title="Log out">
-            <i class="bi bi-box-arrow-right"></i>
-        </a>
     </div>
 </header>
 
@@ -48,9 +50,22 @@ $current_page = basename($_SERVER['PHP_SELF']);
 </nav>
 
 <style>
+/* Center the topbar's content to the same column width as .page-content
+   below it, while the bar itself (background/border/shadow) stays full
+   width. Auto margins on a flex item center it within the leftover
+   space along the main axis. */
+.topbar { justify-content: center; }
+.topbar-inner {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+}
+
 /* .nav-item outside the sidebar needs its own inline-friendly variant —
    the base .nav-item rules in style.css assume a dark sidebar background */
-.topbar nav .nav-item {
+.topbar-inner nav .nav-item {
     text-decoration: none;
     font-size: 0.85rem;
     font-weight: 600;
@@ -59,9 +74,9 @@ $current_page = basename($_SERVER['PHP_SELF']);
     gap: 6px;
     transition: var(--transition);
 }
-.topbar nav .nav-item:hover { background: var(--gray-50); color: var(--navy); }
+.topbar-inner nav .nav-item:hover { background: var(--gray-50); color: var(--navy); }
 @media (max-width: 700px) {
-    .topbar nav { display: none; }
+    .topbar-inner nav { display: none; }
 }
 
 .patient-bottom-nav {
@@ -94,6 +109,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
     body { padding-bottom: 64px; }
 }
 @media (max-width: 380px) {
-    .topbar .admin-name { display: none; }
+    .topbar-inner .admin-name { display: none; }
 }
 </style>
