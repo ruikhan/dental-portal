@@ -301,6 +301,9 @@ function dp_status_color($status) {
                 <i class="bi bi-chat-dots-fill"></i> Message Clinic
             </a>
         </div>
+                    <a href="logout.php" class="topbar-icon-btn" title="Log out">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
     </div>
 
     <!-- Quick Stats -->
