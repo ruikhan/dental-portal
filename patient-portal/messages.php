@@ -64,9 +64,10 @@ $msgs = $messages->fetchAll();
     </div>
         <div class="customer-hero-actions">
             <a href="dashboard.php" class="btn-primary-dp">
-                <i class="bi bi-chat-dots-fill"></i> Message Clinic
+                <i class="bi bi-chat-dots-fill"></i> Back to Dashboard
             </a>
         </div>
+    <br>
     <div class="card-dp" style="display:flex;flex-direction:column;height:calc(100vh - 220px);min-height:420px;">
         <div class="chat-messages" id="chatMessages">
             <?php if (count($msgs) > 0): ?>
