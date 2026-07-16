@@ -27,3 +27,30 @@
         </form>
     </div>
 </div>
+
+
+<script>
+(function () {
+    const trigger = document.getElementById('adminMenuToggle');
+    const menu = document.getElementById('adminDropdownMenu');
+    if (!trigger || !menu) return;
+
+    function closeMenu() {
+        trigger.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('show');
+    }
+    function toggleMenu(e) {
+        e.stopPropagation();
+        const open = trigger.getAttribute('aria-expanded') === 'true';
+        trigger.setAttribute('aria-expanded', String(!open));
+        menu.classList.toggle('show');
+    }
+
+    trigger.addEventListener('click', toggleMenu);
+    trigger.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMenu(e); }
+        if (e.key === 'Escape') closeMenu();
+    });
+    document.addEventListener('click', closeMenu);
+})();
+</script>
