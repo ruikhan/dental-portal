@@ -266,7 +266,11 @@ body {
     border: 2px solid white;
 }
 
+/* ============================
+   ADMIN DROPDOWN (upgrade of .topbar-admin)
+   ============================ */
 .topbar-admin {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 10px;
@@ -275,17 +279,175 @@ body {
     background: var(--gray-50);
     border: 1px solid var(--gray-100);
     cursor: pointer;
+    transition: var(--transition);
+    outline: none;
 }
+.topbar-admin:hover {
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 2px 10px rgba(212,168,67,0.18);
+}
+.topbar-admin[aria-expanded="true"] {
+    border-color: var(--gold);
+    background: white;
+    box-shadow: 0 2px 10px rgba(212,168,67,0.22);
+}
+
 .admin-avatar {
+    position: relative;
     width: 30px; height: 30px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--navy), var(--navy-soft));
+    background: linear-gradient(135deg, var(--navy), var(--teal));
     color: white;
     display: flex; align-items: center; justify-content: center;
     font-size: 0.75rem;
     font-weight: 700;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px white, 0 0 0 3px var(--gray-100);
+    transition: var(--transition);
 }
+.topbar-admin:hover .admin-avatar,
+.topbar-admin[aria-expanded="true"] .admin-avatar {
+    box-shadow: 0 0 0 2px white, 0 0 0 3px var(--gold-soft);
+}
+
+.admin-status-dot {
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 9px; height: 9px;
+    background: var(--success);
+    border-radius: 50%;
+    border: 2px solid white;
+}
+
 .admin-name { font-size: 0.85rem; font-weight: 600; color: var(--gray-800); }
+
+.admin-chevron {
+    font-size: 0.65rem;
+    color: var(--gray-400);
+    transition: var(--transition);
+    margin-left: 2px;
+}
+.topbar-admin[aria-expanded="true"] .admin-chevron {
+    transform: rotate(180deg);
+    color: var(--gold);
+}
+
+/* ── Dropdown panel ─────────────────────────────────────────── */
+.admin-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 12px);
+    right: 0;
+    width: 250px;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--gray-100);
+    padding: 10px;
+    z-index: 200;
+    cursor: default;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-6px) scale(0.97);
+    transform-origin: top right;
+    transition: opacity 0.2s cubic-bezier(0.4,0,0.2,1),
+                transform 0.2s cubic-bezier(0.4,0,0.2,1),
+                visibility 0.2s;
+}
+.admin-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0) scale(1);
+}
+/* little arrow pointing to the avatar */
+.admin-dropdown-menu::before {
+    content: '';
+    position: absolute;
+    top: -6px; right: 22px;
+    width: 12px; height: 12px;
+    background: white;
+    border-left: 1px solid var(--gray-100);
+    border-top: 1px solid var(--gray-100);
+    transform: rotate(45deg);
+}
+
+.admin-dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 8px 14px;
+}
+.admin-avatar-lg {
+    width: 42px; height: 42px;
+    font-size: 1rem;
+    box-shadow: 0 0 0 2px white, 0 0 0 3px var(--gold-soft);
+}
+.admin-dropdown-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.35;
+    overflow: hidden;
+}
+.admin-dropdown-name {
+    font-family: 'DM Serif Display', serif;
+    font-weight: 400;
+    font-size: 1rem;
+    color: var(--navy);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.admin-dropdown-role {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--teal);
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.admin-dropdown-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gray-200), transparent);
+    margin: 2px 0 8px;
+}
+
+/* ── Logout item ─────────────────────────────────────────────── */
+.logout-form { margin: 0; }
+
+.admin-dropdown-item {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    padding: 10px 10px;
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--danger);
+    cursor: pointer;
+    text-align: left;
+    transition: var(--transition);
+}
+.admin-dropdown-item:hover {
+    background: rgba(214,51,72,0.08);
+    padding-left: 14px;
+}
+.dropdown-item-icon {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: rgba(214,51,72,0.1);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+@media (max-width: 768px) {
+    .admin-dropdown-menu { right: -8px; width: 230px; }
+}
 
 /* ============================
    PAGE CONTENT
