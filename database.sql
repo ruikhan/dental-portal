@@ -187,10 +187,15 @@ CREATE TABLE IF NOT EXISTS patient_portal_users (
 
 -- ============================================================
 -- ALTER: dental_services — Add service_label for multi-service
+-- NOTE: "IF NOT EXISTS" removed from ADD COLUMN below because
+-- standard MySQL (8.x) does not support it there (MariaDB-only
+-- feature). If you re-run this script on a database where these
+-- columns already exist, this block will error out — just skip
+-- it or drop the columns first.
 -- ============================================================
-ALTER TABLE dental_services 
-    ADD COLUMN IF NOT EXISTS service_label VARCHAR(100) DEFAULT 'Service 1' AFTER customer_id,
-    ADD COLUMN IF NOT EXISTS service_number INT DEFAULT 1 AFTER service_label;
+ALTER TABLE dental_services
+    ADD COLUMN service_label VARCHAR(100) DEFAULT 'Service 1' AFTER customer_id,
+    ADD COLUMN service_number INT DEFAULT 1 AFTER service_label;
 
 -- ============================================================
 -- CLINIC SETTINGS DEFAULTS
