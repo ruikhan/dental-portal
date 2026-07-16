@@ -1,0 +1,28 @@
+/* ============================================================
+   PATIENT PORTAL — perspective-specific overrides
+   Save as: assets/patient-portal.css
+   ============================================================ */
+
+/* The admin's chat CSS (.chat-bubble.admin / .chat-bubble.customer in
+   style.css) is written from the admin's point of view — admin's own
+   messages align right. Reusing those same classes as-is on the patient
+   side would put the PATIENT's own messages on the left, which reads
+   backwards to them. These ".me" / ".them" classes are sender-agnostic:
+   messages.php assigns "me" when sender === 'customer' (the patient) and
+   "them" when sender === 'admin', regardless of which side of the app is
+   rendering it. */
+.chat-bubble.me { align-self: flex-end; align-items: flex-end; }
+.chat-bubble.them { align-self: flex-start; align-items: flex-start; }
+
+.chat-bubble.me .bubble-body {
+    background: linear-gradient(135deg, var(--teal), var(--navy-soft));
+    color: white;
+    border-radius: 16px 4px 16px 16px;
+}
+.chat-bubble.them .bubble-body {
+    background: white;
+    color: var(--gray-800);
+    border: 1px solid var(--gray-100);
+    border-radius: 4px 16px 16px 16px;
+    box-shadow: var(--shadow);
+}

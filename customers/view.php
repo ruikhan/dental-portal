@@ -32,6 +32,16 @@ $initials = strtoupper(substr($parts[0],0,1)) . (isset($parts[1]) ? strtoupper(s
 $bal = ($s['total_bill'] ?? 0) - ($s['amount_paid'] ?? 0);
 $ps  = $s['payment_status'] ?? 'pending';
 
+// Patient Portal account status for this customer, plus a one-time
+// credential reveal if portal_access.php just created/reset one (the
+// plain password only exists in this flash value — it's never stored or
+// retrievable again after this page render).
+$portal_stmt = $conn->prepare("SELECT * FROM patient_portal_users WHERE customer_id = ?");
+$portal_stmt->execute([$id]);
+$pa = $portal_stmt->fetch();
+$new_credentials = $_SESSION['portal_credentials'] ?? null;
+unset($_SESSION['portal_credentials']);
+
 // Handle send message
 if(isset($_POST['send_message'])) {
     $msg = trim($_POST['message']);
@@ -55,7 +65,7 @@ if(isset($_GET['mark_done'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0f2d4a">
+    <?php include '../partials/pwa-head.php'; ?>
     <title><?php echo htmlspecialchars($c['customer_name']); ?> — DentalPortal</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
@@ -193,6 +203,88 @@ if(isset($_GET['mark_done'])) {
                 </div>
             </div>
             <?php endif; ?>
+
+            <!-- Patient Portal Access -->
+            <div class="card-dp" style="margin-top:24px;">
+                <div class="card-header-dp">
+                    <h3><i class="bi bi-phone"></i> Patient Portal Access</h3>
+                    <?php if ($pa): ?>
+                        <span class="status-pill <?php echo $pa['is_active'] ? 'status-paid' : 'status-cancelled'; ?>">
+                            <?php echo $pa['is_active'] ? 'Active' : 'Disabled'; ?>
+                        </span>
+                    <?php else: ?>
+                        <span class="status-pill status-pending">Not Set Up</span>
+                    <?php endif; ?>
+                </div>
+                <div style="padding:18px 22px;">
+
+                    <?php if ($new_credentials): ?>
+                    <div class="alert-dp alert-info" style="flex-direction:column;align-items:stretch;gap:10px;margin-bottom:16px;">
+                        <div style="display:flex;align-items:center;gap:8px;font-weight:700;">
+                            <i class="bi bi-key-fill"></i> Save these now — the password won't be shown again
+                        </div>
+                        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                            <div style="background:white;border:1px solid rgba(10,143,143,0.25);border-radius:8px;padding:8px 14px;font-family:monospace;font-size:0.9rem;">
+                                <span style="color:var(--gray-400);font-size:0.68rem;display:block;text-transform:uppercase;">Username</span>
+                                <?php echo htmlspecialchars($new_credentials['username']); ?>
+                            </div>
+                            <div style="background:white;border:1px solid rgba(10,143,143,0.25);border-radius:8px;padding:8px 14px;font-family:monospace;font-size:0.9rem;">
+                                <span style="color:var(--gray-400);font-size:0.68rem;display:block;text-transform:uppercase;">Password</span>
+                                <?php echo htmlspecialchars($new_credentials['password']); ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($pa): ?>
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                            <div style="font-size:0.85rem;color:var(--gray-600);">
+                                Username: <strong style="color:var(--navy);"><?php echo htmlspecialchars($pa['username']); ?></strong>
+                                <div style="font-size:0.75rem;color:var(--gray-400);margin-top:2px;">
+                                    Last login: <?php echo $pa['last_login'] ? date('M j, Y h:i A', strtotime($pa['last_login'])) : 'Never'; ?>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                                <form method="POST" action="portal_access.php" onsubmit="return confirm('Generate a new password? The old one will stop working immediately.');">
+                                    <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                                    <input type="hidden" name="action" value="reset">
+                                    <button type="submit" class="btn-outline-dp" style="padding:6px 14px;font-size:0.78rem;">
+                                        <i class="bi bi-arrow-repeat"></i> Reset Password
+                                    </button>
+                                </form>
+                                <?php if ($pa['is_active']): ?>
+                                <form method="POST" action="portal_access.php" onsubmit="return confirm('Disable this patient\'s portal access? They won\'t be able to log in until reactivated.');">
+                                    <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                                    <input type="hidden" name="action" value="deactivate">
+                                    <button type="submit" class="btn-danger-dp" style="padding:6px 14px;font-size:0.78rem;">
+                                        <i class="bi bi-slash-circle"></i> Disable
+                                    </button>
+                                </form>
+                                <?php else: ?>
+                                <form method="POST" action="portal_access.php">
+                                    <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                                    <input type="hidden" name="action" value="reactivate">
+                                    <button type="submit" class="btn-success-dp" style="padding:6px 14px;font-size:0.78rem;">
+                                        <i class="bi bi-check-circle"></i> Reactivate
+                                    </button>
+                                </form>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                            <span style="font-size:0.85rem;color:var(--gray-400);">This patient doesn't have portal login access yet.</span>
+                            <form method="POST" action="portal_access.php">
+                                <input type="hidden" name="customer_id" value="<?php echo $id; ?>">
+                                <input type="hidden" name="action" value="create">
+                                <button type="submit" class="btn-primary-dp" style="padding:8px 16px;font-size:0.82rem;">
+                                    <i class="bi bi-person-plus-fill"></i> Create Portal Access
+                                </button>
+                            </form>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
 
             <!-- Appointments -->
             <div style="margin-top:24px;">
