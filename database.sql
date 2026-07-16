@@ -1,93 +1,449 @@
--- ============================================================
--- DENTAL SERVICE MANAGEMENT PORTAL - DATABASE SCHEMA
--- ============================================================
+-- phpMyAdmin SQL Dump
+-- version 5.2.1
+-- https://www.phpmyadmin.net/
+--
+-- Host: 127.0.0.1:3307
+-- Generation Time: Jul 16, 2026 at 01:26 AM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
-CREATE DATABASE IF NOT EXISTS dental_portal_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE dental_portal_db;
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
 
--- ============================================================
--- TABLE: customers
--- ============================================================
-CREATE TABLE IF NOT EXISTS customers (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_name VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(30) NOT NULL,
-    email VARCHAR(255) DEFAULT NULL,
-    address TEXT DEFAULT NULL,
-    date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
-    notes TEXT DEFAULT NULL
-) ENGINE=InnoDB;
 
--- ============================================================
--- TABLE: dental_services
--- Each customer can have multiple service entries
--- ============================================================
-CREATE TABLE IF NOT EXISTS dental_services (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    tooth_upper INT DEFAULT 0,
-    tooth_lower INT DEFAULT 0,
-    tooth_shade VARCHAR(20) DEFAULT NULL,
-    tooth_size VARCHAR(20) DEFAULT NULL,
-    description TEXT DEFAULT NULL,
-    total_bill DECIMAL(10,2) DEFAULT 0.00,
-    amount_paid DECIMAL(10,2) DEFAULT 0.00,
-    payment_status ENUM('pending','partial','paid') DEFAULT 'pending',
-    date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
 
--- ============================================================
--- TABLE: appointments
--- ============================================================
-CREATE TABLE IF NOT EXISTS appointments (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    service_id INT DEFAULT NULL,
-    appointment_type ENUM('trial','follow_up','final','consultation') DEFAULT 'trial',
-    appointment_date DATE NOT NULL,
-    appointment_time TIME NOT NULL,
-    status ENUM('scheduled','done','cancelled','rescheduled') DEFAULT 'scheduled',
-    notes TEXT DEFAULT NULL,
-    date_created DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE,
-    FOREIGN KEY (service_id) REFERENCES dental_services(id) ON DELETE SET NULL
-) ENGINE=InnoDB;
+--
+-- Database: `dental_portal_db`
+--
 
--- ============================================================
--- TABLE: messages (Customer-Admin Conversation)
--- ============================================================
-CREATE TABLE IF NOT EXISTS messages (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    customer_id INT NOT NULL,
-    sender ENUM('admin','customer') DEFAULT 'admin',
-    message TEXT NOT NULL,
-    is_read TINYINT(1) DEFAULT 0,
-    date_sent DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (customer_id) REFERENCES customers(id) ON DELETE CASCADE
-) ENGINE=InnoDB;
+-- --------------------------------------------------------
 
--- ============================================================
--- SAMPLE DATA
--- ============================================================
-INSERT INTO customers (customer_name, phone_number, email, date_created) VALUES
-('John Doe', '09506574600', 'john.doe@email.com', NOW()),
-('Maria Santos', '09171234567', 'maria.santos@email.com', NOW()),
-('Carlos Reyes', '09281112222', NULL, NOW());
+--
+-- Table structure for table `admin_users`
+--
 
-INSERT INTO dental_services (customer_id, tooth_upper, tooth_lower, tooth_shade, tooth_size, total_bill, amount_paid, payment_status) VALUES
-(1, 5, 2, 'A3', '64', 15000.00, 7000.00, 'partial'),
-(2, 3, 0, 'B2', '52', 9000.00, 9000.00, 'paid'),
-(3, 0, 4, 'A2', '44', 12000.00, 0.00, 'pending');
+CREATE TABLE `admin_users` (
+  `id` int(11) NOT NULL,
+  `full_name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `username` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `role` enum('super_admin','admin','staff') DEFAULT 'admin',
+  `avatar_path` varchar(500) DEFAULT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `last_login` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-INSERT INTO appointments (customer_id, service_id, appointment_type, appointment_date, appointment_time, status) VALUES
-(1, 1, 'trial', '2026-04-05', '10:00:00', 'scheduled'),
-(2, 2, 'final', '2026-04-08', '14:00:00', 'done'),
-(3, 3, 'consultation', '2026-04-10', '09:00:00', 'scheduled');
+--
 
-INSERT INTO messages (customer_id, sender, message, is_read) VALUES
-(1, 'admin', 'Hello John! Your dental case has been received. We will start with the trial fitting on April 5.', 1),
-(1, 'customer', 'Thank you! Looking forward to it. Should I prepare anything?', 1),
-(1, 'admin', 'No special preparation needed. Just come 10 minutes early for paperwork.', 0),
-(2, 'admin', 'Hi Maria! Your dental work is now complete. Please come for your final fitting on April 8 at 2PM.', 1),
-(2, 'customer', 'Perfect, I will be there!', 1);
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `appointments`
+--
+
+CREATE TABLE `appointments` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `service_id` int(11) DEFAULT NULL,
+  `appointment_type` enum('trial','follow_up','final','consultation') DEFAULT 'trial',
+  `appointment_date` date NOT NULL,
+  `appointment_time` time NOT NULL,
+  `status` enum('scheduled','done','cancelled','rescheduled') DEFAULT 'scheduled',
+  `notes` text DEFAULT NULL,
+  `date_created` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `clinic_settings`
+--
+
+CREATE TABLE `clinic_settings` (
+  `id` int(11) NOT NULL,
+  `setting_key` varchar(100) NOT NULL,
+  `setting_value` text DEFAULT NULL,
+  `updated_at` datetime DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `customers`
+--
+
+CREATE TABLE `customers` (
+  `id` int(11) NOT NULL,
+  `customer_name` varchar(255) NOT NULL,
+  `phone_number` varchar(30) NOT NULL,
+  `email` varchar(255) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `date_created` datetime DEFAULT current_timestamp(),
+  `notes` text DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `dental_services`
+--
+
+CREATE TABLE `dental_services` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `service_label` varchar(100) DEFAULT 'Service 1',
+  `service_number` int(11) DEFAULT 1,
+  `tooth_upper` int(11) DEFAULT 0,
+  `tooth_lower` int(11) DEFAULT 0,
+  `tooth_shade` varchar(20) DEFAULT NULL,
+  `tooth_size` varchar(20) DEFAULT NULL,
+  `description` text DEFAULT NULL,
+  `total_bill` decimal(10,2) DEFAULT 0.00,
+  `amount_paid` decimal(10,2) DEFAULT 0.00,
+  `payment_status` enum('pending','partial','paid') DEFAULT 'pending',
+  `date_created` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `invoices`
+--
+
+CREATE TABLE `invoices` (
+  `id` int(11) NOT NULL,
+  `invoice_number` varchar(50) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `service_id` int(11) DEFAULT NULL,
+  `subtotal` decimal(10,2) DEFAULT 0.00,
+  `discount` decimal(10,2) DEFAULT 0.00,
+  `tax` decimal(10,2) DEFAULT 0.00,
+  `total` decimal(10,2) DEFAULT 0.00,
+  `amount_paid` decimal(10,2) DEFAULT 0.00,
+  `balance` decimal(10,2) DEFAULT 0.00,
+  `status` enum('draft','sent','paid','cancelled') DEFAULT 'draft',
+  `notes` text DEFAULT NULL,
+  `issued_date` date NOT NULL,
+  `due_date` date DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `messages`
+--
+
+CREATE TABLE `messages` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `sender` enum('admin','customer') DEFAULT 'admin',
+  `message` text NOT NULL,
+  `is_read` tinyint(1) DEFAULT 0,
+  `date_sent` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `notifications`
+--
+
+CREATE TABLE `notifications` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `type` enum('sms','email') DEFAULT 'email',
+  `event` enum('appointment_reminder','invoice_sent','service_update','custom') DEFAULT 'custom',
+  `recipient` varchar(255) NOT NULL,
+  `subject` varchar(500) DEFAULT NULL,
+  `body` text NOT NULL,
+  `status` enum('pending','sent','failed') DEFAULT 'pending',
+  `sent_at` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `patient_photos`
+--
+
+CREATE TABLE `patient_photos` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `service_id` int(11) DEFAULT NULL,
+  `photo_type` enum('before','after','progress','other') DEFAULT 'before',
+  `file_path` varchar(500) NOT NULL,
+  `file_name` varchar(255) NOT NULL,
+  `caption` text DEFAULT NULL,
+  `uploaded_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `patient_portal_users`
+--
+
+CREATE TABLE `patient_portal_users` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `username` varchar(100) NOT NULL,
+  `password_hash` varchar(255) NOT NULL,
+  `is_active` tinyint(1) DEFAULT 1,
+  `last_login` datetime DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `patient_signatures`
+--
+
+CREATE TABLE `patient_signatures` (
+  `id` int(11) NOT NULL,
+  `customer_id` int(11) NOT NULL,
+  `service_id` int(11) DEFAULT NULL,
+  `signature_path` varchar(500) NOT NULL,
+  `signed_at` datetime DEFAULT current_timestamp(),
+  `consent_text` text DEFAULT NULL,
+  `ip_address` varchar(45) DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `admin_users`
+--
+ALTER TABLE `admin_users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `email` (`email`),
+  ADD UNIQUE KEY `username` (`username`);
+
+--
+-- Indexes for table `appointments`
+--
+ALTER TABLE `appointments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`),
+  ADD KEY `service_id` (`service_id`);
+
+--
+-- Indexes for table `clinic_settings`
+--
+ALTER TABLE `clinic_settings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `setting_key` (`setting_key`);
+
+--
+-- Indexes for table `customers`
+--
+ALTER TABLE `customers`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `dental_services`
+--
+ALTER TABLE `dental_services`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
+-- Indexes for table `invoices`
+--
+ALTER TABLE `invoices`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `invoice_number` (`invoice_number`),
+  ADD KEY `customer_id` (`customer_id`),
+  ADD KEY `service_id` (`service_id`);
+
+--
+-- Indexes for table `messages`
+--
+ALTER TABLE `messages`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
+-- Indexes for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`);
+
+--
+-- Indexes for table `patient_photos`
+--
+ALTER TABLE `patient_photos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`),
+  ADD KEY `service_id` (`service_id`);
+
+--
+-- Indexes for table `patient_portal_users`
+--
+ALTER TABLE `patient_portal_users`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `customer_id` (`customer_id`),
+  ADD UNIQUE KEY `username` (`username`);
+
+--
+-- Indexes for table `patient_signatures`
+--
+ALTER TABLE `patient_signatures`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `customer_id` (`customer_id`),
+  ADD KEY `service_id` (`service_id`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `admin_users`
+--
+ALTER TABLE `admin_users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `appointments`
+--
+ALTER TABLE `appointments`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `clinic_settings`
+--
+ALTER TABLE `clinic_settings`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=18;
+
+--
+-- AUTO_INCREMENT for table `customers`
+--
+ALTER TABLE `customers`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `dental_services`
+--
+ALTER TABLE `dental_services`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `invoices`
+--
+ALTER TABLE `invoices`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `messages`
+--
+ALTER TABLE `messages`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `notifications`
+--
+ALTER TABLE `notifications`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `patient_photos`
+--
+ALTER TABLE `patient_photos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `patient_portal_users`
+--
+ALTER TABLE `patient_portal_users`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `patient_signatures`
+--
+ALTER TABLE `patient_signatures`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `appointments`
+--
+ALTER TABLE `appointments`
+  ADD CONSTRAINT `appointments_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `appointments_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `dental_services` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `dental_services`
+--
+ALTER TABLE `dental_services`
+  ADD CONSTRAINT `dental_services_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `invoices`
+--
+ALTER TABLE `invoices`
+  ADD CONSTRAINT `invoices_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `invoices_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `dental_services` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `messages`
+--
+ALTER TABLE `messages`
+  ADD CONSTRAINT `messages_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `notifications`
+--
+ALTER TABLE `notifications`
+  ADD CONSTRAINT `notifications_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `patient_photos`
+--
+ALTER TABLE `patient_photos`
+  ADD CONSTRAINT `patient_photos_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `patient_photos_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `dental_services` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `patient_portal_users`
+--
+ALTER TABLE `patient_portal_users`
+  ADD CONSTRAINT `patient_portal_users_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `patient_signatures`
+--
+ALTER TABLE `patient_signatures`
+  ADD CONSTRAINT `patient_signatures_ibfk_1` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `patient_signatures_ibfk_2` FOREIGN KEY (`service_id`) REFERENCES `dental_services` (`id`) ON DELETE SET NULL;
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
